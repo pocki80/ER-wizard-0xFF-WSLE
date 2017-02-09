@@ -1,0 +1,513 @@
+#!/bin/bash
+
+#
+# EdgeMAX Wizard "0xFF-BMK-Webstatus-LetsEncrypt" created 02/2017 by CPO/BMK for FunkFeuer.at
+# Shortform: 0xffwsle 0xFF-WSLE
+#
+# Github repository: https://github.com/
+#
+# Works on all EdgeRouter and EdgePoint Devices (system version 1.7.0+)
+#
+# known bugs:
+#
+# updates:
+#
+# open tasks
+# -) fill up file-checks and package status for older versions
+# -) modify webstatus-package -> remove auto-registration process
+# -) modify webstatus-package -> just "maintain" existing domain.csr and signet.crt in server.pem
+# -) execute DEB-installation from wizard if available in /config/user-data, then remove!
+# -) include DEB to wizard, extract on first run
+# -) auto-install DEB on first-run
+# -) trigger key-calculation from wizard if missing
+# -) trigger domain registration from wizard im missing (and online and keys exist)
+# -) trigger renew-process from wizard
+# -) auto-manage renew-cronjob!
+# -) restore original server.pem from wizard
+#
+
+ACTION=$1
+INPUT=$2
+
+cfgusrdir="/config/user-data/"
+log="0xffwsle-install.log"
+
+#
+# DO NOT EDIT BELOW HERE !
+#
+
+#$interface_1100_list='br0.1100,eth0.1100,eth1.1100,eth2.1100,eth3.1100,eth4.1100,eth5.1100,br1.1100,br2.1100';
+#$get_nslookup_from_nodedb=1;       // enables lookup of IPs from cached node database (originally taken from map meta data at map.funkfeuer.at/wien
+#$show_link_to_adminlogin=0;        // enables Link to Routerlogin page (with https-port from config-file)
+#$traceroute_to='78.41.115.228';    // defines destination for traceroute -> should be internet gateway, tunnelserver.funkfeuer.at
+
+#sed -i -r "0,/traceroute_to='.{1,140}'/{s/traceroute_to='.{1,140}'/traceroute_to='11.22.33.44'/}" test
+
+echo "EdgeMAX 0xFF-BMK-Webstatus-LetsEncrypt Wizard started $(date +%H:%M:%S.%N)" > $cfgusrdir$log
+
+#base64begin 
+# !dont edit or remove this comment!
+# first run of wizard, so load and install package
+#curl -o /home/ubnt/0xFF-BMK-webstatus.deb http://193.238.158.8/0xFF-BMK-webstatus/builds/0xff-bmk-webstatus_4.0_mipsel.deb
+#dpkg -i /home/ubnt/0xFF-BMK-webstatus.deb
+#rm -f   /home/ubnt/0xFF-BMK-webstatus.deb
+#
+#if [ $arch == 'mips' ]; then
+#echo "
+#ITxhcmNoPgpkZWJpYW4tYmluYXJ5ICAgMTQ3NzY0MzIxOCAgMCAgICAgMCAgICAgMTAwNjQ0ICA0
+#K8Z3osampzzSd1UxnOdhB7i7n7ufu5+7n7ufu5+7n7ufu5+7n7uf/w8+/w+vxow3APgMAAo=
+#" | base64 -d > $cfgusrdir/olsrd_0.9.0.3-1_mips.deb
+#if [[ $? == 0 ]]; then echo "extracted $arch olsrd." >> $cfgusrdir$log; else echo "extraction of $arch olsrd failed" >> $cfgusrdir$log; fi
+#fi
+#
+# remove installtion block
+sed -i '/^#base64begin/,/^#base64end$/d' $0
+# !dont edit or remove this comment!
+#base64end
+
+# function called when you click the wizard
+load () {
+    echo "Load procedure..." >> $cfgusrdir$log
+    ########
+    ### package status
+    # could be: 
+    # - new (v4.0+ bmk with LE)
+    #      config/custom/bin|lighttpd|www
+    #      post-config.d->single script
+    # - custom-BMK with/out old LE
+    #      config/lighttpd and no config/custom/lighttpd
+    #      config/custom/www/
+    #      config/letsencrypt
+    #      /etc/lighttpd conf as symlink
+    # - addon-BMK with/out old LE
+    #      /var/www/htdocs/cgi.php and no config/custom/www/
+    #      config/letsencrypt
+    #      /etc/lighttpd conf as symlink
+    # - original (no BMK, no LE)
+    #      no custom, no cgi.php no letsecrypt
+    #
+    ## ws-status of bmk php suite
+    # - 0 not installed
+    # - 1 old version: /var/www/htdocs/cgi-bin-status.php
+    # - 2 new version: /config/custom/www/cgi-bin-status.php
+    # - 3 old and new exists
+
+    [ -f "/var/www/htdocs/cgi-bin-status.php" ]    && wsstatus=1 || wsstatus=0
+    if [ -f "/config/custom/www/cgi-bin-status.php" ]; then
+        [ -f "/config/custom/bin/ip2dns" ] && wsstatus=3 || wsstatus=2
+    fi
+
+    wsfiles=',"wsfiles":['
+case $wsstatus in
+    0)
+        wspackagestatus=',"wsstatus":"not installed ('$wsstatus')"'
+        ;;
+    1)
+        wspackagestatus=',"wsstatus":"version v1-v2.5 in /var/www/htdocs ('$wsstatus')"'
+        ;;
+    2)
+        wspackagestatus=',"wsstatus":"version v2.6-v3.x in /config/custom/www ('$wsstatus')"'
+        ;;
+    3)
+        wspackagestatus=',"wsstatus":"version v4.0+ in /config/custom/www ('$wsstatus')"'
+        [ -f "/etc/lighttpd/lighttpd.conf" ] && [ ! -L "/etc/lighttpd/lighttpd.conf" ] && tmp="ok" || tmp="err"
+        wsfiles=$wsfiles'{"name":"[f] /etc/lighttpd/lighttpd.conf","status":"'$tmp'"}'
+        [ -d "/config/custom/lighttpd/conf-enabled" ] && tmp="ok" || tmp="err"
+        wsfiles=$wsfiles',{"name":"[d] /config/custom/lighttpd/conf-enabled/","status":"'$tmp'"}'
+        [ -f "/config/scripts/post-config.d/lighttpd_custom.sh" ] && tmp="ok" || tmp="err"
+        wsfiles=$wsfiles',{"name":"[f] /config/scripts/post-config.d/lighttpd_custom.sh","status":"'$tmp'"}'
+        [ -f "/config/custom/lighttpd/lighttpd_custom.conf" ] && tmp="ok" || tmp="err"
+        wsfiles=$wsfiles',{"name":"[f] /config/custom/lighttpd/lighttpd_custom.conf","status":"'$tmp'"}'
+        [ -f "/config/custom/www/cgi-bin-status.php" ] && tmp="ok" || tmp="err"
+        wsfiles=$wsfiles',{"name":"[f] /config/custom/www/cgi-bin-status.php","status":"'$tmp'"}'
+        [ -d "/config/custom/www/css" ] && tmp="ok" || tmp="err"
+        wsfiles=$wsfiles',{"name":"[d] /config/custom/www/css/","status":"'$tmp'"}'
+        [ -d "/config/custom/www/fonts" ] && tmp="ok" || tmp="err"
+        wsfiles=$wsfiles',{"name":"[d] /config/custom/www/fonts/","status":"'$tmp'"}'
+        [ -d "/config/custom/www/js" ] && tmp="ok" || tmp="err"
+        wsfiles=$wsfiles',{"name":"[d] /config/custom/www/js/","status":"'$tmp'"}'
+        ;;
+esac
+    wsfiles=$wsfiles']'
+
+    ## le-status
+    # - 0 not installed
+    # - 1 old setup (symlinked lighttpd.conf, old setupscript)
+    # - 2 new setup (fully seperated from orig-server)
+    [ -f "/config/custom/lighttpd/lighttpd_custom.conf" ] && lestatus=2 || lestatus=0
+    [ -L "/etc/lighttpd/lighttpd.conf" ] && [ $lestatus == 0 ] && lestatus=1
+    
+    lefiles=',"lefiles":['
+case $lestatus in
+    0)
+        lepackagestatus=',"lestatus":"not installed ('$lestatus')"'
+        ;;
+    1)
+        lepackagestatus=',"lestatus":"version 1 installed ('$lestatus')"'
+        ;;
+    2)
+        lepackagestatus=',"lestatus":"version 2 installed ('$lestatus')"'
+        # from ws-status case 3
+        [ -f "/etc/lighttpd/lighttpd.conf" ] && [ ! -L "/etc/lighttpd/lighttpd.conf" ] && tmp="ok" || tmp="err"
+        lefiles=$lefiles'{"name":"[f] /etc/lighttpd/lighttpd.conf","status":"'$tmp'"}'
+        [ -d "/config/custom/lighttpd/conf-enabled" ] && tmp="ok" || tmp="err"
+        lefiles=$lefiles',{"name":"[d] /config/custom/lighttpd/conf-enabled/","status":"'$tmp'"}'
+        [ -f "/config/scripts/post-config.d/lighttpd_custom.sh" ] && tmp="ok" || tmp="err"
+        lefiles=$lefiles',{"name":"[f] /config/scripts/post-config.d/lighttpd_custom.sh","status":"'$tmp'"}'
+        [ -f "/config/custom/lighttpd/lighttpd_custom.conf" ] && tmp="ok" || tmp="err"
+        lefiles=$lefiles',{"name":"[f] /config/custom/lighttpd/lighttpd_custom.conf","status":"'$tmp'"}'
+		#additional
+        [ -d "/config/custom/www/.well-known/acme-challenge" ] && tmp="ok" || tmp="err"
+        lefiles=$lefiles',{"name":"[d] /config/custom/www/.well-known/acme-challenge/","status":"'$tmp'"}'
+        [ -f "/config/letsencrypt/acme_tiny.py" ] && tmp="ok" || tmp="err"
+        lefiles=$lefiles',{"name":"[f] /config/letsencrypt/acme_tiny.py","status":"'$tmp'"}'
+        [ -f "/config/letsencrypt/letsrenew.sh" ] && tmp="ok" || tmp="err"
+        lefiles=$lefiles',{"name":"[f] /config/letsencrypt/letsrenew.sh","status":"'$tmp'"}'
+        [ -f "/config/custom/bin/ip2dns" ] && tmp="ok" || tmp="err"
+        lefiles=$lefiles',{"name":"[f] /config/custom/bin/ip2dns","status":"'$tmp'"}'
+        [ -f "/config/letsencrypt/acme_tiny.py" ] && tmp="ok" || tmp="err"
+        lefiles=$lefiles',{"name":"[f] /config/letsencrypt/acme_tiny.py","status":"'$tmp'"}'
+        [ -L "/etc/cron.monthly/letsrenew.sh" ] && tmp="ok" || tmp="err"
+        lefiles=$lefiles',{"name":"[L] /etc/cron.monthly/letsrenew.sh","status":"'$tmp'"}'
+		#f	/etc/lighttpd/server.pem (orig, content!)
+		#f	/config/letsencyrpt/repair.sh
+		#f	/config/letsencyrpt/original_server.pem
+        ;;
+#f	/config/letsencrypt/account.key
+#f	/config/letsencrypt/domain.key
+#f	/config/letsencrypt/domain.csr (online install)
+#f	/config/letsencrypt/signed.crt (online renew)
+esac
+    lefiles=$lefiles']'
+
+    
+    # With LE installed, key status can be
+    # - no keys (installation not done)
+    # - cert file missing
+    # - signed
+    # - expired
+    # - server.pem includes original or private-key
+    #
+	# if [ -f "/config/letsencrypt/signed.crt" ] 
+	# && [ ! $(stat -c %s /config/letsencrypt/signed.crt) -eq 0 ] 
+	# && [ $(grep "BEGIN RSA PRIVATE KEY" /etc/lighttpd/server.pem | wc -l) -eq 0 ]
+    cestatus=2
+    
+    cefiles=',"cefiles":['
+    [ -f "/config/letsencrypt/account.key" ] && [ ! $(stat -c %s /config/letsencrypt/account.key) -eq 0 ]  && tmp="ok" || tmp="err"
+    cefiles=$cefiles'{"name":"Account-Key","status":"'$tmp'"}'
+    [ -f "/config/letsencrypt/domain.key" ] && [ ! $(stat -c %s /config/letsencrypt/domain.key) -eq 0 ]  && tmp="ok" || tmp="err"
+    cefiles=$cefiles',{"name":"Domain-Key","status":"'$tmp'"}'
+    [ -f "/config/letsencrypt/domain.csr" ] && [ ! $(stat -c %s /config/letsencrypt/domain.csr) -eq 0 ]  && tmp="ok" || tmp="err"
+    cefiles=$cefiles',{"name":"Domain-Registration","status":"'$tmp'"}'
+    [ -f "/config/letsencrypt/signed.crt" ] && [ ! $(stat -c %s /config/letsencrypt/signed.crt) -eq 0 ]  && tmp="ok" || tmp="err"
+    cefiles=$cefiles',{"name":"Certificate","status":"'$tmp'"}'
+    [ $(grep "BEGIN RSA PRIVATE KEY" /etc/lighttpd/server.pem | wc -l) -eq 1 ]  && tmp="ok" || tmp="err"
+    cefiles=$cefiles',{"name":"Installed RSA-Key in server.pem","status":"'$tmp'"}'
+    cefiles=$cefiles']'
+
+case $cestatus in
+    0)
+        cepackagestatus=',"cestatus":"not installed ('$cestatus')"'
+        ;;
+    1)
+        cepackagestatus=',"cestatus":"version 1 installed ('$cestatus')"'
+        ;;
+    2)
+        cepackagestatus=',"cestatus":"checked ('$cestatus')"'
+        ;;
+esac
+
+    
+    wslepackagestatus='"pkgstatus":"not installed - error"'
+    # restartorigenabled=',"restartorigenabled":"on"'
+    if [ -d "/config/lighttpd" ]; then
+        wslepackagestatus='"pkgstatus":"old config-lighttpd exists - success"'
+    fi
+    if [ -d "/config/custom/lighttpd" ]; then
+        wslepackagestatus='"pkgstatus":"new config-lighttpd exists - success"'
+        restartcustomenabled=',"restartcustomenabled":"on"'
+    fi
+    # check running lighttps and their conf files
+    # check if a conf-file is a link -> old LE-setup?
+    # check for old custom file
+    # check for new custom file
+    # check for current LE installation
+    # check for existing key files and cert files 
+    
+    # check for files from known installations
+    allfiles=',"allfiles":['
+    # must-have-files
+    # ORIG config
+    if [ -L "/etc/lighttpd/lighttpd.conf" ]; then
+        allfiles=$allfiles'{"name":"[L] /etc/lighttpd/lighttpd.conf","status":"link"}'
+    elif [ -f "/etc/lighttpd/lighttpd.conf" ]; then
+        allfiles=$allfiles'{"name":"[f] /etc/lighttpd/lighttpd.conf","status":"ok"}'
+    else
+        allfiles=$allfiles'{"name":"[f] /etc/lighttpd/lighttpd.conf","status":"missing"}'
+    fi
+
+    # setup script
+    if [ -f "/config/scripts/post-config.d/lighttpd_custom.sh" ]; then
+        allfiles=$allfiles',{"name":"[f] /config/scripts/post-config.d/lighttpd_custom.sh","status":"ok"}'
+    else
+        allfiles=$allfiles',{"name":"[f] /config/scripts/post-config.d/lighttpd_custom.sh","status":"missing"}'
+    fi
+    
+    # old allfiles
+    if [ -f "/config/scripts/post-config.d/install_letsencrypt.sh" ]; then
+        allfiles=$allfiles',{"name":"[f] /config/scripts/post-config.d/install_letsencrypt.sh","status":"old"}'
+    fi
+    if [ -d "/config/lighttpd" ]; then
+        allfiles=$allfiles',{"name":"[d] /config/lighttpd","status":"old"}'
+    fi
+    if [ -f "/config/lighttpd/lighttpd.conf" ]; then
+        allfiles=$allfiles',{"name":"[f] /config/lighttpd/lighttpd.conf","status":"old"}'
+    fi
+    if [ -f "/config/lighttpd/lighttpd.conf" ]; then
+        allfiles=$allfiles',{"name":"[f] /config/lighttpd/lighttpd_orig.conf","status":"old"}'
+    fi
+
+    # cert-files
+
+    # end file-check
+    allfiles=$allfiles']'
+
+    # check ports of original ports from config.boot
+    if [ $(grep "http-port" /config/config.boot | wc -l) -eq 1 ]; then
+        orighttpport=$(grep "http-port" /config/config.boot | awk {'print $2;'})
+    else
+        orighttpport=80
+    fi
+    if [ $(grep "https-port" /config/config.boot | wc -l) -eq 1 ]; then
+        orighttpsport=$(grep "https-port" /config/config.boot | awk {'print $2;'})
+    else
+        orighttpsport=443
+    fi
+    origports=',"orighttpport":"'$orighttpport'","orighttpsport":"'$orighttpsport'"'
+    
+    # check custom ports from conf-file(s)
+    if [ -f "/config/custom/lighttpd/lighttpd_custom.conf" ]; then
+        if [ $(grep -i server.port /config/custom/lighttpd/*.conf /config/custom/lighttpd/conf-enabled/*.conf | wc -l) -eq 1 ]; then
+            customhttpport=$(grep -i server.port /config/custom/lighttpd/*.conf /config/custom/lighttpd/conf-enabled/*.conf | awk -F'=' {'gsub(" ","",$2);print $2;'})
+        else
+            customhttpport=80
+        fi
+        if [ $(grep -iE 'SERVER\["socket"\] == "0.0.0.0' /config/custom/lighttpd/*.conf /config/custom/lighttpd/conf-enabled/*.conf | wc -l) -eq 1 ]; then
+            customhttpsport=$(grep -iE 'SERVER\["socket"\] == "0.0.0.0' /config/custom/lighttpd/*.conf /config/custom/lighttpd/conf-enabled/*.conf | awk -F':' {'gsub(" ","",$3);gsub("{","",$3);gsub("\"","",$3);print $3;'})
+        else
+            customhttpsport=443
+        fi
+    else
+        customhttpport="0"
+        customhttpsport="0"
+    fi
+    customports=',"customhttpport":"'$customhttpport'","customhttpsport":"'$customhttpsport'"'
+
+
+    # get all variables together for output
+    echo -n "{\"success\":\"1\",\"data\":{ $wslepackagestatus $lepackagestatus $wspackagestatus $cepackagestatus $allfiles $wsfiles $lefiles $cefiles $restartorigenabled $restartcustomenabled $origports $customports },"
+    echo    " \"definition\":{ }}"
+}
+
+# function called when you click apply
+apply () {
+    restartcustomenabled=$(jq -M -r '.restartcustomenabled' $INPUT)
+    restartorigenabled=$(jq -M -r '.restartorigenabled' $INPUT)
+    ### PORT configuration
+    # get current settings in order to notice changes
+    # check ports of original ports from config.boot
+    if [ $(grep "http-port" /config/config.boot | wc -l) -eq 1 ]; then
+        orighttpport=$(grep "http-port" /config/config.boot | awk {'print $2;'})
+    else
+        orighttpport=80
+    fi
+    if [ $(grep "https-port" /config/config.boot | wc -l) -eq 1 ]; then
+        orighttpsport=$(grep "https-port" /config/config.boot | awk {'print $2;'})
+    else
+        orighttpsport=443
+    fi
+    
+    # check custom ports from conf-file(s)
+    if [ -f "/config/custom/lighttpd/lighttpd_custom.conf" ]; then
+        if [ $(grep -i server.port /config/custom/lighttpd/*.conf /config/custom/lighttpd/conf-enabled/*.conf | wc -l) -eq 1 ]; then
+            customhttpport=$(grep -i server.port /config/custom/lighttpd/*.conf /config/custom/lighttpd/conf-enabled/*.conf | awk -F'=' {'gsub(" ","",$2);print $2;'})
+        else
+            customhttpport=80
+        fi
+        if [ $(grep -iE 'SERVER\["socket"\] == "0.0.0.0' /config/custom/lighttpd/*.conf /config/custom/lighttpd/conf-enabled/*.conf | wc -l) -eq 1 ]; then
+            customhttpsport=$(grep -iE 'SERVER\["socket"\] == "0.0.0.0' /config/custom/lighttpd/*.conf /config/custom/lighttpd/conf-enabled/*.conf | awk -F':' {'gsub(" ","",$3);gsub("{","",$3);gsub("\"","",$3);print $3;'})
+        else
+            customhttpsport=443
+        fi
+    else
+        customhttpport="0"
+        customhttpsport="0"
+    fi
+
+    # now get configuration from formular
+    orighttpportnew=$(jq -M -r '.orighttpport' $INPUT)
+    orighttpsportnew=$(jq -M -r '.orighttpsport' $INPUT)
+    customhttpportnew=$(jq -M -r '.customhttpport' $INPUT)
+    customhttpsportnew=$(jq -M -r '.customhttpsport' $INPUT)
+
+    # check orig ports for conflicts
+    # allow change only of all ports have no conflicts
+    #
+    # check against ssh port or forwarded ports as well!
+    #
+    # consider custom server to be not available/configured, original server is preferred to run
+    # 1->2, 1->3, 1->4, 2->3, 2->4, 3->4
+    # orig server: check for port change
+    error=0
+    if [ ! "$orighttpport" == "$orighttpportnew" ] || [ ! "$orighttpsport" == "$orighttpsportnew" ]; then
+        echo "orig-http-ports change, check for conflicts..." >> $cfgusrdir$log
+        if [ "$orighttpportnew" == "$orighttpsportnew" ]; then
+            echo "error: orig http = https" >> $cfgusrdir$log
+            error=1
+        fi
+        if [ "$orighttpportnew" == "$customhttpportnew" ]; then
+            echo "error: orig http = custom http" >> $cfgusrdir$log
+            error=2
+        fi
+        if [ "$orighttpsportnew" == "$customhttpsportnew" ]; then
+            echo "error: orig https = custom https" >> $cfgusrdir$log
+            error=4
+        fi
+        if [ "$orighttpsportnew" == "$customhttpportnew" ]; then
+            echo "error: orig https = custom http" >> $cfgusrdir$log
+            error=5
+        fi
+        if [ "$orighttpportnew" == "$customhttpsportnew" ]; then
+            echo "error: orig http = custom https" >> $cfgusrdir$log
+            error=6
+        fi
+        # change orig server ports
+        if [ "$error" == "0" ]; then
+            # it is save to change orig server ports
+            echo "orig ports change approved: new ports: "$orighttpportnew"/"$orighttpsportnew >> $cfgusrdir$log
+            #if needed, shut down custom webserver first to free up the ports in "old conflict" situation
+            #restartcustomenabled="on"
+            ### 
+            ### place change scripts right here
+            ###
+            # after change was executed, check again for real settings
+            # this ensures the checks agains custom port settings are really acurate!
+            if [ $(grep "http-port" /config/config.boot | wc -l) -eq 1 ]; then
+                orighttpportnew=$(grep "http-port" /config/config.boot | awk {'print $2;'})
+            else
+                orighttpportnew=80
+            fi
+            if [ $(grep "https-port" /config/config.boot | wc -l) -eq 1 ]; then
+                orighttpsportnew=$(grep "https-port" /config/config.boot | awk {'print $2;'})
+            else
+                orighttpsportnew=443
+            fi
+            echo "orig ports change executed: current ports: "$orighttpportnew"/"$orighttpsportnew >> $cfgusrdir$log
+            origports=',"orighttpport":"'$orighttpportnew'","orighttpsport":"'$orighttpsportnew'"'
+        else
+            echo "error "$error >> $cfgusrdir$log
+            origports=',"orighttpport":"'$orighttpport'","orighttpsport":"'$orighttpsport'"'
+        fi
+    fi
+    
+    # check custom server port change
+    error=0
+    if [ ! "$customhttpportnew" == "0" ] && [ ! "$customhttpsportnew" == "0" ]; then
+    if [ ! "$customhttpport" == "$customhttpportnew" ] || [ ! "$customhttpsport" == "$customhttpsportnew" ]; then
+        echo "custom-http-ports change, check for conflicts..." >> $cfgusrdir$log
+        if [ "$customhttpportnew" == "$customhttpsportnew" ]; then
+            echo "error: custom http = https" >> $cfgusrdir$log
+            error=30
+        fi
+        if [ "$orighttpportnew" == "$customhttpportnew" ]; then
+            echo "error: orig http = custom http" >> $cfgusrdir$log
+            error=20
+        fi
+        if [ "$orighttpsportnew" == "$customhttpsportnew" ]; then
+            echo "error: orig https = custom https" >> $cfgusrdir$log
+            error=40
+        fi
+        if [ "$orighttpsportnew" == "$customhttpportnew" ]; then
+            echo "error: orig https = custom http" >> $cfgusrdir$log
+            error=50
+        fi
+        if [ "$orighttpportnew" == "$customhttpsportnew" ]; then
+            echo "error: orig http = custom https" >> $cfgusrdir$log
+            error=60
+        fi
+        
+        # change custom server ports
+        if [ "$error" == "0" ]; then
+            # it is save to change custom server ports
+            echo "custom ports change approved: new ports: "$customhttpportnew"/"$customhttpsportnew >> $cfgusrdir$log
+            #restartcustomenabled="on"
+        else
+            echo "error "$error >> $cfgusrdir$log
+            customports=',"customhttpport":"'$customhttpport'","customhttpsport":"'$customhttpsport'"'
+        fi
+    fi
+    fi
+    ### PORT configuration END
+    #######
+
+    if [[ "$restartcustomenabled" == "on" ]]; then
+        # Restarting custom lighttpd webserver
+        echo "Restarting custom lighttpd webserver" >> $cfgusrdir$log
+        sudo /sbin/start-stop-daemon --stop --pidfile /var/run/lighttpd_custom.pid
+        if [ -f "/var/run/lighttpd_custom.pid" ]; then
+          rm /var/run/lighttpd_custom.pid
+        fi
+        sudo /sbin/start-stop-daemon --start --quiet \
+              --pidfile /var/run/lighttpd_custom.pid \
+              --exec /usr/sbin/lighttpd -- -f /config/custom/lighttpd/lighttpd_custom.conf
+    fi
+    if [[ "$restartorigenabled" == "on" ]]; then
+        # Restarting original lighttpd webserver for EdgeOS
+        echo "Restarting ORIGINAL lighttpd webserver" >> $cfgusrdir$log
+        sudo /sbin/start-stop-daemon --stop --pidfile /var/run/lighttpd.pid
+        if [ -f "/var/run/lighttpd.pid" ]; then
+          rm /var/run/lighttpd.pid
+        fi
+        sudo /sbin/start-stop-daemon --start --quiet \
+              --pidfile /var/run/lighttpd.pid \
+              --exec /usr/sbin/lighttpd -- -f /etc/lighttpd/lighttpd.conf
+    fi
+
+    # for debugging purposes
+    cp $INPUT /tmp/result.json
+    echo "{\"success\":\"1\",\"data\":{ \"dummy\":\"0\" $origports $customports },\"definition\":{ }}"
+}
+
+
+#{
+#"success":"1",
+#"data":{ 
+#    "pkgstatus":"success: packages olsrd 0.9.0.3-1 and olsrd-plugins 0.9.0.3-1 installed.","daemonstatus":"IPv4: 78.41.119.41:698 3873-olsrd. IPv6: 2a02:60:10a:9e11::1:698 3889-olsrd6."
+#   ,"olsrdsetupscript":"on","olsrd4enabled":"on","olsrd4runonboot":"on","olsrd4Ip4Broadcast":"255.255.255.255"
+#   ,"olsrd4Hna":"78.41.119.44 255.255.255.255;78.41.119.43 255.255.255.255;78.41.119.42 255.255.255.255","olsrd4LinkQualityMult":"78.41.113.155 0.7;","olsrd4plgtxtinfo":"on","olsrd4plgjsoninfo":"","olsrd4plghttpinfo":""
+#   ,"olsrd4config":[
+#        {"enabled":"on","olsrd4interface":"br0","ipv4address":"78.41.119.41/27"}
+#       ,{"olsrd4interface":"br1","ipv4address":"192.168.8.160/24"}
+#       ,{"olsrd4interface":"eth0.21","ipv4address":"192.168.21.1/24"}
+#       ,{"olsrd4interface":"br0.1100","ipv4address":"10.27.18.100/24"}
+#     ]
+#   ,"olsrd6enabled":"on","olsrd6runonboot":"","olsrd6Hna":"","olsrd6LinkQualityMult":"","olsrd6plgtxtinfo":"on","olsrd6plgjsoninfo":"","olsrd6plghttpinfo":"","olsrd6config":[{"enabled":"on","olsrd6interface":"br0","ipv6address":"2a02:60:10a:9e11::1/128"}] 
+# },
+#"definition":{ }
+#}
+
+
+case "$ACTION" in
+    load)
+        load
+        ;;
+    apply)
+        apply
+        ;;
+esac
+
+echo "EdgeMAX 0xFF-BMK-Webstatus-LetsEncrypt Wizard ended $(date +%H:%M:%S.%N)" >> $cfgusrdir$log
+
+# call arguments verbatim:
+#$@
