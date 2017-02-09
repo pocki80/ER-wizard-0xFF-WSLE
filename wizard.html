@@ -1,0 +1,123 @@
+<!--
+
+EdgeMAX Wizard "0xFF-BMK-Webstatus-LetsEncrypt" created 02/2017 by CPO/BMK for FunkFeuer.at
+Works on EdgeRouter and EdgeRouter X / X-SFP (system version 1.7.0+)
+
+-->
+<div class="instructions">
+    <h3>0xFF-BMK-Webstatus with Let's Encrypt setup</h3>
+</div>
+<legend style="position:absolute;right:0px;padding:5px;">
+    <center>EdgeMAX Wizard "0xFF-BMK-Webstatus-LetsEncrypt"<br>created 02/2017 by CPO/BMK for FunkFeuer.at</center>
+</legend>
+<div style="padding:15px;border: 1px solid lightgray;width:648px">
+  <table border="0">
+    <tr><td style="vertical-align:middle">Package Status:</td><td><input style="right:10px" id="pkgstatus" name="pkgstatus" type="text" size="60" disabled /></td></tr>
+    <tr><td style="vertical-align:middle">BMK-webstatus:</td> <td><input style="right:10px" id="wsstatus" name="wsstatus" type="text" size="60" disabled /></td></tr>
+    <tr><td style="vertical-align:middle">Let's Encrypt:</td> <td><input style="right:10px" id="lestatus" name="lestatus" type="text" size="60" disabled /></td></tr>
+    <tr><td style="vertical-align:middle">Certificates:</td>  <td><input style="right:10px" id="cestatus" name="cestatus" type="text" size="60" disabled /></td></tr>
+    <tr><td style="vertical-align:middle">Orig-Server-Ports:</td><td>
+	   <input style="right:10px" id="orighttpport"  name="orighttpport"  type="number" size="6" />
+	   <input style="right:10px" id="orighttpsport" name="orighttpsport" type="number" size="6" /> (WebGUI!!)
+	</td></tr>
+    <tr><td style="vertical-align:middle">Custom-Server-Ports:</td><td>
+	   <input style="right:10px" id="customhttpport"  name="customhttpport"  type="number" size="6" /> 
+	   <input style="right:10px" id="customhttpsport" name="customhttpsport" type="number" size="6" /> (Cert-Check!!)
+	</td></tr>
+  </table>
+</div>
+
+<fieldset id="wsfiles" name="wsfiles" class="primary expanded">
+    <legend>BMK-WebStatus php files</legend>
+    <div class="addable" data-min="0" data-max="99" data-object="wsfiles" data-objectify="1">
+        <span><b><u>Files checked</u></b></span>
+        <div class="addable-template" style="padding-top:0px;">
+            <div class="multi">
+                <div>File-Name <input id="name" name="name" size="50" disabled /></div>
+                <div>Status    <input name="status" size="10" disabled /></div>
+            </div>
+        </div>
+        <div class="addable-container"></div>
+        <!-- although hidden, this add-button needs to exist! //-->
+        <button type="button" class="addable-add" style="position:absolute;right:0px;opacity:0.0;filter:alpha(opacity=0);" disabled></button>
+    </div>
+</fieldset>
+
+<fieldset id="lefiles" name="lefiles" class="primary expanded">
+    <legend>Let's Encrypt files</legend>
+    <div class="addable" data-min="0" data-max="99" data-object="lefiles" data-objectify="1">
+        <span><b><u>Files checked</u></b></span>
+        <div class="addable-template" style="padding-top:0px;">
+            <div class="multi">
+                <div>File-Name <input id="name" name="name" size="50" disabled /></div>
+                <div>Status    <input name="status" size="10" disabled /></div>
+            </div>
+        </div>
+        <div class="addable-container"></div>
+        <!-- although hidden, this add-button needs to exist! //-->
+        <button type="button" class="addable-add" style="position:absolute;right:0px;opacity:0.0;filter:alpha(opacity=0);" disabled></button>
+    </div>
+</fieldset>
+
+<fieldset id="cefiles" name="cefiles" class="primary expanded">
+    <legend>Let's Encrypt files</legend>
+    <div class="addable" data-min="0" data-max="10" data-object="cefiles" data-objectify="1">
+        <span><b><u>Files</u></b></span>
+        <div class="addable-template" style="padding-top:0px;">
+            <div class="multi">
+                <div>File      <input id="name" name="name" size="50" disabled /></div>
+                <div>Status    <input name="status" size="10" disabled /></div>
+            </div>
+        </div>
+        <div class="addable-container"></div>
+        <!-- although hidden, this add-button needs to exist! //-->
+        <button type="button" class="addable-add" style="position:absolute;right:0px;opacity:0.0;filter:alpha(opacity=0);" disabled></button>
+    </div>
+</fieldset>
+
+
+<fieldset id="allfiles" name="allfiles" class="primary expanded">
+    <legend>File-Liste overall</legend>
+    <div class="addable" data-min="0" data-max="99" data-object="allfiles" data-objectify="1">
+        <span><b><u>Files found</u></b></span>
+        <div class="addable-template" style="padding-top:0px;">
+            <div class="multi">
+                <div>File-Name <input id="name" name="name" size="50" disabled /></div>
+                <div>Status    <input name="status" size="10" disabled /></div>
+            </div>
+        </div>
+        <div class="addable-container"></div>
+        <!-- although hidden, this add-button needs to exist! //-->
+        <button type="button" class="addable-add" style="position:absolute;right:0px;opacity:0.0;filter:alpha(opacity=0);" disabled></button>
+    </div>
+</fieldset>
+
+<div style="padding:15px;border: 1px solid lightgray;width:648px">
+    <input id="restartorigenabled"   name="restartorigenabled" type="checkbox" disabled /><span> Restart original lighttpd on 'Apply' (Wizard will tell "save failed")</span><br>
+    <input id="restartcustomenabled" name="restartcustomenabled" type="checkbox" /><span> Restart custom lighttpd on 'Apply'.</span><br>
+</div>
+<br><br>
+<script>
+function validate() {
+}
+document.onchange=function(){
+    var input = document.getElementById('pkgstatus');
+    if(input.value.match(/error/)) {
+        input.style.color = "red";
+        //disable();
+    } else if (input.value.match(/success/)) {
+        input.style.color = "green";
+        //enable();
+    }
+}
+document.onsubmit=function(){
+    var input = document.getElementById('pkgstatus');
+    //if(input.value.match(/error/)) {
+        //disable();
+    //} else if (input.value.match(/success/)) {
+        //enable();
+    //}
+    document.getElementById('pkgstatus').disabled = true;
+    document.getElementById('restartorigenabled').disabled = true;
+}
+</script>
