@@ -65,6 +65,38 @@ sed -i '/^#base64begin/,/^#base64end$/d' $0
 # !dont edit or remove this comment!
 #base64end
 
+# hosts to check for online status
+v4iphost='8.8.8.8'
+v4dnshost='www.google.com'
+v6iphost='2001:4860:4860::8888'
+v6dnshost='www.google.com'
+# function to check if connectivity is given to download packages
+onlinecheck () {
+    ping="ping -c 1 -W 1 ";
+    ping6="ping6 -c 1 -W 1 ";
+    $ping $v4iphost > /dev/null
+    if [[ $? == 0 ]]; then
+        $ping6 $v6iphost > /dev/null
+        if [[ $? == 0 ]]; then
+            $ping6 $v6dnshost > /dev/null
+            if [[ $? == 0 ]]; then
+                return 0
+            else
+                return 1
+            fi
+        else
+            $ping $v4dnshost > /dev/null
+            if [[ $? == 0 ]]; then
+                return 0
+            else
+                return 1
+            fi
+        fi
+    else
+        return 1
+    fi
+}
+
 # function called when you click the wizard
 load () {
     echo "Load procedure..." >> $cfgusrdir$log
@@ -156,7 +188,7 @@ case $lestatus in
         lefiles=$lefiles',{"name":"[f] /config/scripts/post-config.d/lighttpd_custom.sh","status":"'$tmp'"}'
         [ -f "/config/custom/lighttpd/lighttpd_custom.conf" ] && tmp="ok" || tmp="err"
         lefiles=$lefiles',{"name":"[f] /config/custom/lighttpd/lighttpd_custom.conf","status":"'$tmp'"}'
-		#additional
+        #additional
         [ -d "/config/custom/www/.well-known/acme-challenge" ] && tmp="ok" || tmp="err"
         lefiles=$lefiles',{"name":"[d] /config/custom/www/.well-known/acme-challenge/","status":"'$tmp'"}'
         [ -f "/config/letsencrypt/acme_tiny.py" ] && tmp="ok" || tmp="err"
@@ -169,14 +201,14 @@ case $lestatus in
         lefiles=$lefiles',{"name":"[f] /config/letsencrypt/acme_tiny.py","status":"'$tmp'"}'
         [ -L "/etc/cron.monthly/letsrenew.sh" ] && tmp="ok" || tmp="err"
         lefiles=$lefiles',{"name":"[L] /etc/cron.monthly/letsrenew.sh","status":"'$tmp'"}'
-		#f	/etc/lighttpd/server.pem (orig, content!)
-		#f	/config/letsencyrpt/repair.sh
-		#f	/config/letsencyrpt/original_server.pem
+        #f  /etc/lighttpd/server.pem (orig, content!)
+        #f  /config/letsencyrpt/repair.sh
+        #f  /config/letsencyrpt/original_server.pem
         ;;
-#f	/config/letsencrypt/account.key
-#f	/config/letsencrypt/domain.key
-#f	/config/letsencrypt/domain.csr (online install)
-#f	/config/letsencrypt/signed.crt (online renew)
+#f  /config/letsencrypt/account.key
+#f  /config/letsencrypt/domain.key
+#f  /config/letsencrypt/domain.csr (online install)
+#f  /config/letsencrypt/signed.crt (online renew)
 esac
     lefiles=$lefiles']'
 
@@ -188,9 +220,9 @@ esac
     # - expired
     # - server.pem includes original or private-key
     #
-	# if [ -f "/config/letsencrypt/signed.crt" ] 
-	# && [ ! $(stat -c %s /config/letsencrypt/signed.crt) -eq 0 ] 
-	# && [ $(grep "BEGIN RSA PRIVATE KEY" /etc/lighttpd/server.pem | wc -l) -eq 0 ]
+    # if [ -f "/config/letsencrypt/signed.crt" ] 
+    # && [ ! $(stat -c %s /config/letsencrypt/signed.crt) -eq 0 ] 
+    # && [ $(grep "BEGIN RSA PRIVATE KEY" /etc/lighttpd/server.pem | wc -l) -eq 0 ]
     cestatus=2
     
     cefiles=',"cefiles":['
@@ -228,6 +260,8 @@ esac
         wslepackagestatus='"pkgstatus":"new config-lighttpd exists - success"'
         restartcustomenabled=',"restartcustomenabled":"on"'
     fi
+    #ps aux | grep openssl to check pending installation process
+    #
     # check running lighttps and their conf files
     # check if a conf-file is a link -> old LE-setup?
     # check for old custom file
@@ -314,6 +348,9 @@ esac
 apply () {
     restartcustomenabled=$(jq -M -r '.restartcustomenabled' $INPUT)
     restartorigenabled=$(jq -M -r '.restartorigenabled' $INPUT)
+    registercert=$(jq -M -r '.registercert' $INPUT)
+    installbmkpackage=$(jq -M -r '.installbmkpackage' $INPUT)
+    
     ### PORT configuration
     # get current settings in order to notice changes
     # check ports of original ports from config.boot
@@ -360,7 +397,7 @@ apply () {
     # 1->2, 1->3, 1->4, 2->3, 2->4, 3->4
     # orig server: check for port change
     error=0
-    if [ ! "$orighttpport" == "$orighttpportnew" ] || [ ! "$orighttpsport" == "$orighttpsportnew" ]; then
+    if [ "$orighttpport" != "$orighttpportnew" ] || [ "$orighttpsport" != "$orighttpsportnew" ]; then
         echo "orig-http-ports change, check for conflicts..." >> $cfgusrdir$log
         if [ "$orighttpportnew" == "$orighttpsportnew" ]; then
             echo "error: orig http = https" >> $cfgusrdir$log
@@ -413,8 +450,8 @@ apply () {
     
     # check custom server port change
     error=0
-    if [ ! "$customhttpportnew" == "0" ] && [ ! "$customhttpsportnew" == "0" ]; then
-    if [ ! "$customhttpport" == "$customhttpportnew" ] || [ ! "$customhttpsport" == "$customhttpsportnew" ]; then
+    if [ "$customhttpportnew" != "0" ] && [ "$customhttpsportnew" != "0" ]; then
+    if [ "$customhttpport" != "$customhttpportnew" ] || [ "$customhttpsport" != "$customhttpsportnew" ]; then
         echo "custom-http-ports change, check for conflicts..." >> $cfgusrdir$log
         if [ "$customhttpportnew" == "$customhttpsportnew" ]; then
             echo "error: custom http = https" >> $cfgusrdir$log
@@ -451,6 +488,67 @@ apply () {
     ### PORT configuration END
     #######
 
+    #######
+    ### installation process
+    if [[ "$installbmkpackage" == "on" ]]; then
+        echo "Start Package-Install..." >> $cfgusrdir$log
+    fi
+    ### End installation process
+    #######
+    
+    #######
+    ### registration process
+    if [[ "$registercert" == "on" ]]; then
+        echo "Start Registration..." >> $cfgusrdir$log
+        if [ $((onlinecheck)) != 0 ] ||
+           [ ! -f "/config/letsencrypt/domain.key" ] ||
+           [ $(stat -c %s /config/letsencrypt/domain.key) -eq 0 ] ||
+           [ ! -f "/config/letsencrypt/account.key" ] ||
+           [ $(stat -c %s /config/letsencrypt/account.key) -eq 0 ] ||
+           [ ! -d "/config/custom/www/.well-known/acme-challenge/" ]
+        then
+            echo "error: offline, missing or empty files, or challenge-directory!" >> $cfgusrdir$log
+        else
+            echo "Retrieving IP and FQDN..." >> $cfgusrdir$log
+            # read activated PublicIP from OLSR Daemon (should be optimized in the future)
+            if [ $(ps aux | grep olsr | grep -v grep | wc -l) -eq 0 ]; then
+                # it works only if txtinfo Plugin is activated in the OLSR Wizard!
+                PUBLICIP=$(echo $(curl -s -o- http://127.0.0.1:2006/interfaces | head -n3 | tail -n1 | awk {'print $5'}) | /config/custom/bin/ip2dns | awk {'print $2'} | sed -e s/dns.//)
+            else
+                # if OLSR is not activated or not used - we get the "public" IP from the default route iface
+                PUBLICIP=$(echo $(/sbin/ifconfig $(ip r | grep default | tail -n1 | awk {'print $5'}) | head -n2 | tail -n1 | awk {'print $2'} | sed -e s/addr://) | /config/custom/bin/ip2dns | awk {'print $2'} | sed -e s/dns.//)
+            fi
+            echo "...lookup result: ,"$PUBLICIP"," >> $cfgusrdir$log
+            # if domain.csr exists, check the FQDN it is registered for
+            if [ -f "/config/letsencrypt/domain.csr" ] && [ ! $(stat -c %s /config/letsencrypt/domain.csr) -eq 0 ] && [ "$PUBLICIP" ]; then
+                CURRENT=$(openssl req -in /config/letsencrypt/domain.csr -noout -text | grep Subject | grep CN= | awk -F'=' {'print $2'})
+                echo "Existing domain.csr is for FQDN: ,"$CURRENT"," >> $cfgusrdir$log
+                if [ "$CURRENT" != "$PUBLICIP" ] && [ "$CURRENT" ]; then
+                    echo "FQDN changed, creating new domain-csr..." >> $cfgusrdir$log
+                    #debug!! openssl req -new -sha256 -key /config/letsencrypt/domain.key -subj "/CN=$PUBLICIP" | tee /config/letsencrypt/domain.csr
+                elif [ ! "$CURRENT" ]; then
+                    echo "Error checking current csr-file" >> $cfgusrdir$log
+                else
+                    echo "New registration not needed" >> $cfgusrdir$log
+                fi
+            elif [ "$PUBLICIP" ]; then
+                # correctly register csr file
+                echo "Creating domain-csr..." >> $cfgusrdir$log
+                #debug!! openssl req -new -sha256 -key /config/letsencrypt/domain.key -subj "/CN=$PUBLICIP" | tee /config/letsencrypt/domain.csr
+            else
+                echo "FQDN not known!" >> $cfgusrdir$log
+            fi
+
+            # Run letsrenew.sh file for initial connect and/or renewal, doesn't matter
+            echo "Starting registration procedure..." >> $cfgusrdir$log
+            #debug!! bash /config/letsencrypt/letsrenew.sh
+            echo "Done!" >> $cfgusrdir$log
+            restartcustomenabled="on"
+        fi
+    fi
+    ### End registration process
+    #######
+    
     if [[ "$restartcustomenabled" == "on" ]]; then
         # Restarting custom lighttpd webserver
         echo "Restarting custom lighttpd webserver" >> $cfgusrdir$log
