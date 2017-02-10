@@ -4,26 +4,29 @@
 # EdgeMAX Wizard "0xFF-BMK-Webstatus-LetsEncrypt" created 02/2017 by CPO/BMK for FunkFeuer.at
 # Shortform: 0xffwsle 0xFF-WSLE
 #
-# Github repository: https://github.com/
+# Github repository: https://github.com/pocki80/ER-wizard-0xFF-WSLE
 #
 # Works on all EdgeRouter and EdgePoint Devices (system version 1.7.0+)
 #
-# known bugs:
+# what it does:
+# -) on installation of wizard, downloads/extracts BMK-Webstatus-LE package to user-data
+# -) shows webserver port settings and status of certificates, package installations
+# -) trigger BMK-Webstatus Package-Install on apply() -> won't register FQDN certificate
+# -) trigger FQDN certificate register and/or renewal on apply()
+# -) restart webserices on apply()
 #
-# updates:
+# known bugs/limitations:
+# -) not all files from older versions are checked: bmk-webstatus-package will clean them on install anyway
+# -) change webserver ports disabled, not yet fully implemented the change procedure
+# -) apply will raise error message "failed" on following actions: 
+#    install, register/renew, restart-orig (webui session will break due to lighttpd restart)
 #
 # open tasks
 # -) fill up file-checks and package status for older versions
-# -) modify webstatus-package -> remove auto-registration process
-# -) modify webstatus-package -> just "maintain" existing domain.csr and signet.crt in server.pem
-# -) execute DEB-installation from wizard if available in /config/user-data, then remove!
-# -) include DEB to wizard, extract on first run
-# -) auto-install DEB on first-run
-# -) trigger key-calculation from wizard if missing
-# -) trigger domain registration from wizard im missing (and online and keys exist)
-# -) trigger renew-process from wizard
-# -) auto-manage renew-cronjob!
-# -) restore original server.pem from wizard
+# -) show timestamps/FQDN for domain.csr and signed.crt
+# -) include DEB to wizard base64-encoded, replace download procedure
+# -) manage settings for BMK-Webstatus cgi-bin-status.php to configure:
+#    traceroute-destination, show_link_to_adminlogin, get_nslookup_from_nodedb, interface_1100_list
 #
 
 ACTION=$1
@@ -31,6 +34,9 @@ INPUT=$2
 
 cfgusrdir="/config/user-data/"
 log="0xffwsle-install.log"
+
+# package file name for download from path http://193.238.158.8/0xFF-BMK-webstatus/builds/$filename
+filename="0xff-bmk-webstatus_4.1_mipsel.deb"
 
 #
 # DO NOT EDIT BELOW HERE !
@@ -48,18 +54,25 @@ echo "EdgeMAX 0xFF-BMK-Webstatus-LetsEncrypt Wizard started $(date +%H:%M:%S.%N)
 #base64begin 
 # !dont edit or remove this comment!
 # first run of wizard, so load and install package
-#curl -o /home/ubnt/0xFF-BMK-webstatus.deb http://193.238.158.8/0xFF-BMK-webstatus/builds/0xff-bmk-webstatus_4.0_mipsel.deb
-#dpkg -i /home/ubnt/0xFF-BMK-webstatus.deb
-#rm -f   /home/ubnt/0xFF-BMK-webstatus.deb
 #
-#if [ $arch == 'mips' ]; then
-#echo "
-#ITxhcmNoPgpkZWJpYW4tYmluYXJ5ICAgMTQ3NzY0MzIxOCAgMCAgICAgMCAgICAgMTAwNjQ0ICA0
+#echo "ITxhcmNoPgpkZWJpYW4tYmluYXJ5ICAgMTQ3NzY0MzIxOCAgMCAgICAgMCAgICAgMTAwNjQ0ICA0
 #K8Z3osampzzSd1UxnOdhB7i7n7ufu5+7n7ufu5+7n7ufu5+7n7uf/w8+/w+vxow3APgMAAo=
-#" | base64 -d > $cfgusrdir/olsrd_0.9.0.3-1_mips.deb
-#if [[ $? == 0 ]]; then echo "extracted $arch olsrd." >> $cfgusrdir$log; else echo "extraction of $arch olsrd failed" >> $cfgusrdir$log; fi
+#" | base64 -d > $cfgusrdir/0xff-bmk-webstatus_4.1_mipsel.deb
+#if [[ $? == 0 ]]; then 
+#    echo "extracted package file: "$filename" without error" >> $cfgusrdir$log
+#    ls -al $cfgusrdir/0xff-bmk-webstatus_*.deb >> $cfgusrdir$log
+#else
+#    echo "extraction of package file failed" >> $cfgusrdir$log
 #fi
 #
+# base64 builds/0xff-bmk-webstatus_4.1_mipsel.deb >0xff-bmk-webstatus_4.1_mipsel.deb.base64
+
+# simulate base64 extraction - directly download the package file
+echo "Start Package-Download..." >> $cfgusrdir$log
+curl -o /config/user-data/$filename http://193.238.158.8/0xFF-BMK-webstatus/builds/$filename >> $cfgusrdir$log
+echo "Download done:" >> $cfgusrdir$log
+ls -al $cfgusrdir/0xff-bmk-webstatus_*.deb >> $cfgusrdir$log
+
 # remove installtion block
 sed -i '/^#base64begin/,/^#base64end$/d' $0
 # !dont edit or remove this comment!
@@ -350,7 +363,77 @@ apply () {
     restartorigenabled=$(jq -M -r '.restartorigenabled' $INPUT)
     registercert=$(jq -M -r '.registercert' $INPUT)
     installbmkpackage=$(jq -M -r '.installbmkpackage' $INPUT)
+
+    #######
+    ### installation process
+    if [[ "$installbmkpackage" == "on" ]]; then
+        echo "Start Package-Install..." >> $cfgusrdir$log
+        if [ -f "/config/user-data/$filename" ]; then
+            echo "Execute package..." >> $cfgusrdir$log
+            sudo dpkg -i /config/user-data/$filename >> $cfgusrdir$log
+            echo "...wizard install-procedure finished" >> $cfgusrdir$log
+        else
+            echo "Installation package file /config/user-data/"$filename" not found.." >> $cfgusrdir$log
+        fi
+    fi
+    ### End installation process
+    #######
     
+    #######
+    ### registration process
+    if [[ "$registercert" == "on" ]]; then
+        echo "Start Registration..." >> $cfgusrdir$log
+        if [ $((onlinecheck)) != 0 ] ||
+           [ ! -f "/config/letsencrypt/domain.key" ] ||
+           [ $(stat -c %s /config/letsencrypt/domain.key) -eq 0 ] ||
+           [ ! -f "/config/letsencrypt/account.key" ] ||
+           [ $(stat -c %s /config/letsencrypt/account.key) -eq 0 ] ||
+           [ ! -d "/config/custom/www/.well-known/acme-challenge/" ]
+        then
+            echo "error: offline, missing or empty files, or challenge-directory!" >> $cfgusrdir$log
+        else
+            echo "Retrieving IP and FQDN..." >> $cfgusrdir$log
+            # read activated PublicIP from OLSR Daemon (should be optimized in the future)
+            if [ $(ps aux | grep olsr | grep -v grep | wc -l) -eq 0 ]; then
+                # it works only if txtinfo Plugin is activated in the OLSR Wizard!
+                PUBLICIP=$(echo $(curl -s -o- http://127.0.0.1:2006/interfaces | head -n3 | tail -n1 | awk {'print $5'}) | /config/custom/bin/ip2dns | awk {'print $2'} | sed -e s/dns.//)
+            else
+                # if OLSR is not activated or not used - we get the "public" IP from the default route iface
+                PUBLICIP=$(echo $(/sbin/ifconfig $(ip r | grep default | tail -n1 | awk {'print $5'}) | head -n2 | tail -n1 | awk {'print $2'} | sed -e s/addr://) | /config/custom/bin/ip2dns | awk {'print $2'} | sed -e s/dns.//)
+            fi
+            echo "...lookup result: ,"$PUBLICIP"," >> $cfgusrdir$log
+            # if domain.csr exists, check the FQDN it is registered for
+            if [ -f "/config/letsencrypt/domain.csr" ] && [ ! $(stat -c %s /config/letsencrypt/domain.csr) -eq 0 ] && [ "$PUBLICIP" ]; then
+                CURRENT=$(openssl req -in /config/letsencrypt/domain.csr -noout -text | grep Subject | grep CN= | awk -F'=' {'print $2'})
+                echo "Existing domain.csr is for FQDN: ,"$CURRENT"," >> $cfgusrdir$log
+                if [ "$CURRENT" != "$PUBLICIP" ] && [ "$CURRENT" ]; then
+                    echo "FQDN changed, creating new domain-csr..." >> $cfgusrdir$log
+                    openssl req -new -sha256 -key /config/letsencrypt/domain.key -subj "/CN=$PUBLICIP" | tee /config/letsencrypt/domain.csr >> $cfgusrdir$log
+                elif [ ! "$CURRENT" ]; then
+                    echo "Error checking current csr-file" >> $cfgusrdir$log
+                else
+                    echo "New registration not needed" >> $cfgusrdir$log
+                fi
+            elif [ "$PUBLICIP" ]; then
+                # correctly register csr file
+                echo "Creating domain-csr..." >> $cfgusrdir$log
+                openssl req -new -sha256 -key /config/letsencrypt/domain.key -subj "/CN=$PUBLICIP" | tee /config/letsencrypt/domain.csr >> $cfgusrdir$log
+            else
+                echo "FQDN not known!" >> $cfgusrdir$log
+            fi
+
+            # Run letsrenew.sh file for initial connect and/or renewal, doesn't matter
+            echo "Starting registration/renewal procedure..." >> $cfgusrdir$log
+            bash /config/letsencrypt/letsrenew.sh >> $cfgusrdir$log
+            echo "Done!" >> $cfgusrdir$log
+            restartcustomenabled="on"
+        fi
+    fi
+    ### End registration process
+    #######
+    
+    
+    #######
     ### PORT configuration
     # get current settings in order to notice changes
     # check ports of original ports from config.boot
@@ -397,7 +480,9 @@ apply () {
     # 1->2, 1->3, 1->4, 2->3, 2->4, 3->4
     # orig server: check for port change
     error=0
-    if [ "$orighttpport" != "$orighttpportnew" ] || [ "$orighttpsport" != "$orighttpsportnew" ]; then
+    if [ ! "$orighttpportnew" ] || [ ! "$orighttpportsnew" ] || [ ! "$customhttpportnew" ] || [ ! "$customhttpsportnew" ]; then
+        echo "Not all 4 Port-Values in result.json" >> $cfgusrdir$log
+    elif [ "$orighttpport" != "$orighttpportnew" ] || [ "$orighttpsport" != "$orighttpsportnew" ]; then
         echo "orig-http-ports change, check for conflicts..." >> $cfgusrdir$log
         if [ "$orighttpportnew" == "$orighttpsportnew" ]; then
             echo "error: orig http = https" >> $cfgusrdir$log
@@ -441,18 +526,22 @@ apply () {
                 orighttpsportnew=443
             fi
             echo "orig ports change executed: current ports: "$orighttpportnew"/"$orighttpsportnew >> $cfgusrdir$log
-            origports=',"orighttpport":"'$orighttpportnew'","orighttpsport":"'$orighttpsportnew'"'
         else
-            echo "error "$error >> $cfgusrdir$log
-            origports=',"orighttpport":"'$orighttpport'","orighttpsport":"'$orighttpsport'"'
+            echo "error "$error", orig-ports remain on "$orighttpport"/"$orighttpsport"." >> $cfgusrdir$log
         fi
     fi
     
     # check custom server port change
     error=0
-    if [ "$customhttpportnew" != "0" ] && [ "$customhttpsportnew" != "0" ]; then
-    if [ "$customhttpport" != "$customhttpportnew" ] || [ "$customhttpsport" != "$customhttpsportnew" ]; then
+    if [ ! "$orighttpportnew" ] || [ ! "$orighttpportsnew" ] || [ ! "$customhttpportnew" ] || [ ! "$customhttpsportnew" ]; then
+        echo "Not all 4 Port-Values in result.json" >> $cfgusrdir$log
+    elif [ "$customhttpportnew" != "0" ] && [ "$customhttpsportnew" != "0" ]; then
+      if [ "$customhttpport" != "$customhttpportnew" ] || [ "$customhttpsport" != "$customhttpsportnew" ]; then
         echo "custom-http-ports change, check for conflicts..." >> $cfgusrdir$log
+        if [ ! "$orighttpportnew" ] || [ ! "$orighttpportsnew" ] || [ ! "$customhttpportnew" ] || [ ! "$customhttpsportnew" ]; then
+            echo "error: one of the 4 port values is empty" >> $cfgusrdir$log
+            error=98
+        fi
         if [ "$customhttpportnew" == "$customhttpsportnew" ]; then
             echo "error: custom http = https" >> $cfgusrdir$log
             error=30
@@ -480,75 +569,15 @@ apply () {
             echo "custom ports change approved: new ports: "$customhttpportnew"/"$customhttpsportnew >> $cfgusrdir$log
             #restartcustomenabled="on"
         else
-            echo "error "$error >> $cfgusrdir$log
-            customports=',"customhttpport":"'$customhttpport'","customhttpsport":"'$customhttpsport'"'
+            echo "error "$error", custom ports remain on "$customhttpport"/"$customhttpsport"." >> $cfgusrdir$log
         fi
-    fi
+      fi
     fi
     ### PORT configuration END
     #######
 
     #######
-    ### installation process
-    if [[ "$installbmkpackage" == "on" ]]; then
-        echo "Start Package-Install..." >> $cfgusrdir$log
-    fi
-    ### End installation process
-    #######
-    
-    #######
-    ### registration process
-    if [[ "$registercert" == "on" ]]; then
-        echo "Start Registration..." >> $cfgusrdir$log
-        if [ $((onlinecheck)) != 0 ] ||
-           [ ! -f "/config/letsencrypt/domain.key" ] ||
-           [ $(stat -c %s /config/letsencrypt/domain.key) -eq 0 ] ||
-           [ ! -f "/config/letsencrypt/account.key" ] ||
-           [ $(stat -c %s /config/letsencrypt/account.key) -eq 0 ] ||
-           [ ! -d "/config/custom/www/.well-known/acme-challenge/" ]
-        then
-            echo "error: offline, missing or empty files, or challenge-directory!" >> $cfgusrdir$log
-        else
-            echo "Retrieving IP and FQDN..." >> $cfgusrdir$log
-            # read activated PublicIP from OLSR Daemon (should be optimized in the future)
-            if [ $(ps aux | grep olsr | grep -v grep | wc -l) -eq 0 ]; then
-                # it works only if txtinfo Plugin is activated in the OLSR Wizard!
-                PUBLICIP=$(echo $(curl -s -o- http://127.0.0.1:2006/interfaces | head -n3 | tail -n1 | awk {'print $5'}) | /config/custom/bin/ip2dns | awk {'print $2'} | sed -e s/dns.//)
-            else
-                # if OLSR is not activated or not used - we get the "public" IP from the default route iface
-                PUBLICIP=$(echo $(/sbin/ifconfig $(ip r | grep default | tail -n1 | awk {'print $5'}) | head -n2 | tail -n1 | awk {'print $2'} | sed -e s/addr://) | /config/custom/bin/ip2dns | awk {'print $2'} | sed -e s/dns.//)
-            fi
-            echo "...lookup result: ,"$PUBLICIP"," >> $cfgusrdir$log
-            # if domain.csr exists, check the FQDN it is registered for
-            if [ -f "/config/letsencrypt/domain.csr" ] && [ ! $(stat -c %s /config/letsencrypt/domain.csr) -eq 0 ] && [ "$PUBLICIP" ]; then
-                CURRENT=$(openssl req -in /config/letsencrypt/domain.csr -noout -text | grep Subject | grep CN= | awk -F'=' {'print $2'})
-                echo "Existing domain.csr is for FQDN: ,"$CURRENT"," >> $cfgusrdir$log
-                if [ "$CURRENT" != "$PUBLICIP" ] && [ "$CURRENT" ]; then
-                    echo "FQDN changed, creating new domain-csr..." >> $cfgusrdir$log
-                    #debug!! openssl req -new -sha256 -key /config/letsencrypt/domain.key -subj "/CN=$PUBLICIP" | tee /config/letsencrypt/domain.csr
-                elif [ ! "$CURRENT" ]; then
-                    echo "Error checking current csr-file" >> $cfgusrdir$log
-                else
-                    echo "New registration not needed" >> $cfgusrdir$log
-                fi
-            elif [ "$PUBLICIP" ]; then
-                # correctly register csr file
-                echo "Creating domain-csr..." >> $cfgusrdir$log
-                #debug!! openssl req -new -sha256 -key /config/letsencrypt/domain.key -subj "/CN=$PUBLICIP" | tee /config/letsencrypt/domain.csr
-            else
-                echo "FQDN not known!" >> $cfgusrdir$log
-            fi
-
-            # Run letsrenew.sh file for initial connect and/or renewal, doesn't matter
-            echo "Starting registration procedure..." >> $cfgusrdir$log
-            #debug!! bash /config/letsencrypt/letsrenew.sh
-            echo "Done!" >> $cfgusrdir$log
-            restartcustomenabled="on"
-        fi
-    fi
-    ### End registration process
-    #######
-    
+    ### Restart/Start procedures
     if [[ "$restartcustomenabled" == "on" ]]; then
         # Restarting custom lighttpd webserver
         echo "Restarting custom lighttpd webserver" >> $cfgusrdir$log
@@ -571,30 +600,13 @@ apply () {
               --pidfile /var/run/lighttpd.pid \
               --exec /usr/sbin/lighttpd -- -f /etc/lighttpd/lighttpd.conf
     fi
+    ### Restart/Start procedures END
+    #######
 
     # for debugging purposes
     cp $INPUT /tmp/result.json
-    echo "{\"success\":\"1\",\"data\":{ \"dummy\":\"0\" $origports $customports },\"definition\":{ }}"
+    echo "{\"success\":\"1\"}"
 }
-
-
-#{
-#"success":"1",
-#"data":{ 
-#    "pkgstatus":"success: packages olsrd 0.9.0.3-1 and olsrd-plugins 0.9.0.3-1 installed.","daemonstatus":"IPv4: 78.41.119.41:698 3873-olsrd. IPv6: 2a02:60:10a:9e11::1:698 3889-olsrd6."
-#   ,"olsrdsetupscript":"on","olsrd4enabled":"on","olsrd4runonboot":"on","olsrd4Ip4Broadcast":"255.255.255.255"
-#   ,"olsrd4Hna":"78.41.119.44 255.255.255.255;78.41.119.43 255.255.255.255;78.41.119.42 255.255.255.255","olsrd4LinkQualityMult":"78.41.113.155 0.7;","olsrd4plgtxtinfo":"on","olsrd4plgjsoninfo":"","olsrd4plghttpinfo":""
-#   ,"olsrd4config":[
-#        {"enabled":"on","olsrd4interface":"br0","ipv4address":"78.41.119.41/27"}
-#       ,{"olsrd4interface":"br1","ipv4address":"192.168.8.160/24"}
-#       ,{"olsrd4interface":"eth0.21","ipv4address":"192.168.21.1/24"}
-#       ,{"olsrd4interface":"br0.1100","ipv4address":"10.27.18.100/24"}
-#     ]
-#   ,"olsrd6enabled":"on","olsrd6runonboot":"","olsrd6Hna":"","olsrd6LinkQualityMult":"","olsrd6plgtxtinfo":"on","olsrd6plgjsoninfo":"","olsrd6plghttpinfo":"","olsrd6config":[{"enabled":"on","olsrd6interface":"br0","ipv6address":"2a02:60:10a:9e11::1/128"}] 
-# },
-#"definition":{ }
-#}
-
 
 case "$ACTION" in
     load)
@@ -606,6 +618,3 @@ case "$ACTION" in
 esac
 
 echo "EdgeMAX 0xFF-BMK-Webstatus-LetsEncrypt Wizard ended $(date +%H:%M:%S.%N)" >> $cfgusrdir$log
-
-# call arguments verbatim:
-#$@
