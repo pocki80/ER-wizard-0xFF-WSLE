@@ -17,17 +17,22 @@ Works on EdgeRouter and EdgeRouter X / X-SFP (system version 1.7.0+)
     <tr><td style="vertical-align:middle">Let's Encrypt:</td> <td><input style="right:10px" id="lestatus" name="lestatus" type="text" size="60" disabled /></td></tr>
     <tr><td style="vertical-align:middle">Certificates:</td>  <td><input style="right:10px" id="cestatus" name="cestatus" type="text" size="60" disabled /></td></tr>
     <tr><td style="vertical-align:middle">Orig-Server-Ports:</td><td>
-	   <input style="right:10px" id="orighttpport"  name="orighttpport"  type="number" size="6" />
-	   <input style="right:10px" id="orighttpsport" name="orighttpsport" type="number" size="6" /> (WebGUI!!)
-	</td></tr>
+       <input style="right:10px" id="orighttpport"  name="orighttpport"  type="number" size="6" disabled />
+       <input style="right:10px" id="orighttpsport" name="orighttpsport" type="number" size="6" disabled /> (WebGUI!!)
+    </td></tr>
     <tr><td style="vertical-align:middle">Custom-Server-Ports:</td><td>
-	   <input style="right:10px" id="customhttpport"  name="customhttpport"  type="number" size="6" /> 
-	   <input style="right:10px" id="customhttpsport" name="customhttpsport" type="number" size="6" /> (Cert-Check!!)
-	</td></tr>
+       <input style="right:10px" id="customhttpport"  name="customhttpport"  type="number" size="6" disabled /> 
+       <input style="right:10px" id="customhttpsport" name="customhttpsport" type="number" size="6" disabled /> (Cert-Check!!)
+    </td></tr>
+    <tr><td style="vertical-align:middle" colspan=2>
+       Changing Ports will be a future feature of this wizard. 
+       By now, BMK-Webpackage will migrate original webserver to ports 81/8443 to install custom webserver on ports 80/443.
+    </td></tr>
   </table>
+  
 </div>
 
-<fieldset id="wsfiles" name="wsfiles" class="primary expanded">
+<fieldset id="wsfiles" name="wsfiles" class="primary closed">
     <legend>BMK-WebStatus php files</legend>
     <div class="addable" data-min="0" data-max="99" data-object="wsfiles" data-objectify="1">
         <span><b><u>Files checked</u></b></span>
@@ -43,7 +48,7 @@ Works on EdgeRouter and EdgeRouter X / X-SFP (system version 1.7.0+)
     </div>
 </fieldset>
 
-<fieldset id="lefiles" name="lefiles" class="primary expanded">
+<fieldset id="lefiles" name="lefiles" class="primary closed">
     <legend>Let's Encrypt files</legend>
     <div class="addable" data-min="0" data-max="99" data-object="lefiles" data-objectify="1">
         <span><b><u>Files checked</u></b></span>
@@ -76,7 +81,7 @@ Works on EdgeRouter and EdgeRouter X / X-SFP (system version 1.7.0+)
 </fieldset>
 
 
-<fieldset id="allfiles" name="allfiles" class="primary expanded">
+<fieldset id="allfiles" name="allfiles" class="primary closed">
     <legend>File-Liste overall</legend>
     <div class="addable" data-min="0" data-max="99" data-object="allfiles" data-objectify="1">
         <span><b><u>Files found</u></b></span>
@@ -93,10 +98,12 @@ Works on EdgeRouter and EdgeRouter X / X-SFP (system version 1.7.0+)
 </fieldset>
 
 <div style="padding:15px;border: 1px solid lightgray;width:648px">
-    <input id="installbmkpackage"    name="installbmkpackage"    type="checkbox" disabled /><span> Install 0xFF-BMK-Webstatus-LetsEcrypt Package v4.1 on 'Apply'</span><br>
+    <input id="installbmkpackage"    name="installbmkpackage"    type="checkbox" /><span> Install 0xFF-BMK-Webstatus-LetsEcrypt Package v4.1 on 'Apply'</span><br>
     <input id="registercert"         name="registercert"         type="checkbox" /><span> Register FQDN and renew/install Certificate on 'Apply'</span><br>
-    <input id="restartorigenabled"   name="restartorigenabled"   type="checkbox" disabled /><span> Restart original lighttpd on 'Apply' (Wizard will tell "save failed")</span><br>
+    <input id="restartorigenabled"   name="restartorigenabled"   type="checkbox" disabled /><span> Restart original lighttpd on 'Apply'</span><br>
     <input id="restartcustomenabled" name="restartcustomenabled" type="checkbox" /><span> Restart custom lighttpd on 'Apply'.</span><br>
+    <br>
+    Wizard will raise the error "save failed" as webservices will restart and break the response session.
 </div>
 <br><br>
 <script>
@@ -120,6 +127,12 @@ document.onsubmit=function(){
         //enable();
     //}
     document.getElementById('pkgstatus').disabled = true;
+    //document.getElementById('installbmkpackage').disabled = true;
     document.getElementById('restartorigenabled').disabled = true;
+    document.getElementById('orighttpport').disabled = true;
+    document.getElementById('orighttpsport').disabled = true;
+    document.getElementById('customhttpport').disabled = true;
+    document.getElementById('customhttpsport').disabled = true;
+
 }
 </script>
