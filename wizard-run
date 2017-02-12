@@ -23,8 +23,6 @@
 #
 # open tasks
 # -) fill up file-checks and package status for older versions
-# -) show timestamps/FQDN for domain.csr and signed.crt
-# -) include DEB to wizard base64-encoded, replace download procedure
 # -) manage settings for BMK-Webstatus cgi-bin-status.php to configure:
 #    traceroute-destination, show_link_to_adminlogin, get_nslookup_from_nodedb, interface_1100_list
 #
@@ -41,13 +39,6 @@ filename="0xff-bmk-webstatus_4.1_mipsel.deb"
 #
 # DO NOT EDIT BELOW HERE !
 #
-
-#$interface_1100_list='br0.1100,eth0.1100,eth1.1100,eth2.1100,eth3.1100,eth4.1100,eth5.1100,br1.1100,br2.1100';
-#$get_nslookup_from_nodedb=1;       // enables lookup of IPs from cached node database (originally taken from map meta data at map.funkfeuer.at/wien
-#$show_link_to_adminlogin=0;        // enables Link to Routerlogin page (with https-port from config-file)
-#$traceroute_to='78.41.115.228';    // defines destination for traceroute -> should be internet gateway, tunnelserver.funkfeuer.at
-
-#sed -i -r "0,/traceroute_to='.{1,140}'/{s/traceroute_to='.{1,140}'/traceroute_to='11.22.33.44'/}" test
 
 echo "EdgeMAX 0xFF-BMK-Webstatus-LetsEncrypt Wizard started $(date +%H:%M:%S.%N)" > $cfgusrdir$log
 
@@ -263,6 +254,49 @@ case $cestatus in
         ;;
 esac
 
+    ##########
+    ### CERT Details
+    #get current public FQDN
+    if [ $(ps aux | grep olsr | grep -v grep | wc -l) -eq 0 ]; then
+        # it works only if txtinfo Plugin is activated in the OLSR Wizard!
+        PUBLICIP=$(echo $(curl -s -o- http://127.0.0.1:2006/interfaces | head -n3 | tail -n1 | awk {'print $5'}) | /config/custom/bin/ip2dns | awk {'print $2'} | sed -e s/dns.//)
+    else
+        # if OLSR is not activated or not used - we get the "public" IP from the default route iface
+        PUBLICIP=$(echo $(/sbin/ifconfig $(ip r | grep default | tail -n1 | awk {'print $5'}) | head -n2 | tail -n1 | awk {'print $2'} | sed -e s/addr://) | /config/custom/bin/ip2dns | awk {'print $2'} | sed -e s/dns.//)
+    fi
+    [ "$PUBLICIP" ] && ledetails=',"currentfqdn":"'$PUBLICIP'"' || ledetails=',"currentfqdn":"not available"'
+    
+    #get current register from domain.csr
+    if [ -f "/config/letsencrypt/domain.csr" ] && [ ! $(stat -c %s /config/letsencrypt/domain.csr) -eq 0 ]; then
+        CURRENT=$(openssl req -in /config/letsencrypt/domain.csr -noout -text | grep Subject | grep CN= | awk -F'=' {'print $2'})
+    fi
+    [ "$CURRENT" ] && ledetails=$ledetails',"domainfqdn":"'$CURRENT'"' || ledetails=$ledetails',"domainfqdn":"not available"'
+    
+    #certfqdn certfrom certuntil
+    if [ -f "/config/letsencrypt/signed.crt" ] && [ ! $(stat -c %s /config/letsencrypt/signed.crt) -eq 0 ]; then
+        EXPIRES=$(openssl x509 -enddate -noout -in /config/letsencrypt/signed.crt | awk -F'=' {'print $2'})
+        VALIDFROM=$(openssl x509 -startdate -noout -in /config/letsencrypt/signed.crt | awk -F'=' {'print $2'})
+        SUBJECT=$(openssl x509 -subject -noout -in /config/letsencrypt/signed.crt | awk -F'=' {'print $3'})
+    fi
+    [ "$VALIDFROM" ] && ledetails=$ledetails',"certfrom":"'$VALIDFROM'"' || ledetails=$ledetails',"certfrom":"not available"'
+    [ "$SUBJECT" ] && ledetails=$ledetails',"certfqdn":"'$SUBJECT'"' || ledetails=$ledetails',"certfqdn":"not available"'
+    if [ "$EXPIRES" ]; then 
+        ledetails=$ledetails',"certuntil":"'$EXPIRES'"'
+        dt1=$(echo "$EXPIRES" | awk {'print "Sun "$1" "$2" "$3" "$5" "$4'})
+        t1=$(date --date="$dt1" +%s)
+        t2=$(date +%s)
+        if [ $t1 \> $t2 ]; then 
+            ledetails=$ledetails',"certexpire":"'$(($(($t1 - $t2))/86400))' days left"'
+        else
+            ledetails=$ledetails',"certexpire":"'$(($(($t2 - $t1))/86400))' days expired"'
+        fi;
+    else
+        ledetails=$ledetails',"certuntil":"not available"'
+        ledetails=$ledetails',"certexpire":"not available"'
+    fi
+    
+    ### CERT Details
+    ##########
     
     wslepackagestatus='"pkgstatus":"not installed - error"'
     # restartorigenabled=',"restartorigenabled":"on"'
@@ -314,7 +348,6 @@ esac
     if [ -f "/config/lighttpd/lighttpd.conf" ]; then
         allfiles=$allfiles',{"name":"[f] /config/lighttpd/lighttpd_orig.conf","status":"old"}'
     fi
-
     # cert-files
 
     # end file-check
@@ -353,7 +386,8 @@ esac
 
 
     # get all variables together for output
-    echo -n "{\"success\":\"1\",\"data\":{ $wslepackagestatus $lepackagestatus $wspackagestatus $cepackagestatus $allfiles $wsfiles $lefiles $cefiles $restartorigenabled $restartcustomenabled $origports $customports },"
+    echo -n "{\"success\":\"1\",\"data\":{ $wslepackagestatus $lepackagestatus $wspackagestatus $cepackagestatus $allfiles $wsfiles $lefiles $cefiles"
+    echo -n "$ledetails $restartorigenabled $restartcustomenabled $origports $customports },"
     echo    " \"definition\":{ }}"
 }
 
@@ -368,12 +402,12 @@ apply () {
     ### installation process
     if [[ "$installbmkpackage" == "on" ]]; then
         echo "Start Package-Install..." >> $cfgusrdir$log
-        if [ -f "/config/user-data/$filename" ]; then
+        if [ -f "$cfgusrdir$filename" ]; then
             echo "Execute package..." >> $cfgusrdir$log
-            sudo dpkg -i /config/user-data/$filename >> $cfgusrdir$log
+            sudo dpkg -i $cfgusrdir$filename >> $cfgusrdir$log
             echo "...wizard install-procedure finished" >> $cfgusrdir$log
         else
-            echo "Installation package file /config/user-data/"$filename" not found.." >> $cfgusrdir$log
+            echo "Installation package file "$cfgusrdir$filename" not found.." >> $cfgusrdir$log
         fi
     fi
     ### End installation process
