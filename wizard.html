@@ -28,9 +28,29 @@ Works on EdgeRouter and EdgeRouter X / X-SFP (system version 1.7.0+)
        Changing Ports will be a future feature of this wizard. 
        By now, BMK-Webpackage will migrate original webserver to ports 81/8443 to install custom webserver on ports 80/443.
     </td></tr>
+    <tr><td style="vertical-align:middle">Current DNS</td><td><input style="right:10px" id="currentfqdn" name="currentfqdn" type="text" size="60" disabled /></td></tr>
+    <tr><td style="vertical-align:middle">Domain-Key FQDN</td><td><input style="right:10px" id="domainfqdn" name="domainfqdn" type="text" size="60" disabled /></td></tr>
+    <tr><td style="vertical-align:middle">Certificate FQDN</td><td><input style="right:10px" id="certfqdn" name="certfqdn" type="text" size="60" disabled /> </td></tr>
+    <tr><td style="vertical-align:middle">Certificate Validity</td><td><input style="right:10px" id="certfrom" name="certfrom" type="text" size="20" disabled /> 
+	                                      to <input style="right:10px" id="certuntil" name="certuntil" type="text" size="20" disabled /> 
+										  <input style="right:10px" id="certexpire" name="certexpire" type="text" size="15" disabled /> </td></tr>
   </table>
-  
 </div>
+
+<fieldset id="cefiles" name="cefiles" class="primary expanded">
+    <legend>Let's Encrypt files</legend>
+    <div class="addable" data-min="0" data-max="10" data-object="cefiles" data-objectify="1">
+        <div class="addable-template" style="padding-top:0px;">
+            <div class="multi">
+                <div>File      <input id="name" name="name" size="50" disabled /></div>
+                <div>Status    <input name="status" size="10" disabled /></div>
+            </div>
+        </div>
+        <div class="addable-container"></div>
+        <!-- although hidden, this add-button needs to exist! //-->
+        <button type="button" class="addable-add" style="position:absolute;right:0px;opacity:0.0;filter:alpha(opacity=0);" disabled></button>
+    </div>
+</fieldset>
 
 <fieldset id="wsfiles" name="wsfiles" class="primary closed">
     <legend>BMK-WebStatus php files</legend>
@@ -63,23 +83,6 @@ Works on EdgeRouter and EdgeRouter X / X-SFP (system version 1.7.0+)
         <button type="button" class="addable-add" style="position:absolute;right:0px;opacity:0.0;filter:alpha(opacity=0);" disabled></button>
     </div>
 </fieldset>
-
-<fieldset id="cefiles" name="cefiles" class="primary expanded">
-    <legend>Let's Encrypt files</legend>
-    <div class="addable" data-min="0" data-max="10" data-object="cefiles" data-objectify="1">
-        <span><b><u>Files</u></b></span>
-        <div class="addable-template" style="padding-top:0px;">
-            <div class="multi">
-                <div>File      <input id="name" name="name" size="50" disabled /></div>
-                <div>Status    <input name="status" size="10" disabled /></div>
-            </div>
-        </div>
-        <div class="addable-container"></div>
-        <!-- although hidden, this add-button needs to exist! //-->
-        <button type="button" class="addable-add" style="position:absolute;right:0px;opacity:0.0;filter:alpha(opacity=0);" disabled></button>
-    </div>
-</fieldset>
-
 
 <fieldset id="allfiles" name="allfiles" class="primary closed">
     <legend>File-Liste overall</legend>
