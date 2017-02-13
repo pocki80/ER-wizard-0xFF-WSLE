@@ -13,13 +13,13 @@
 # -) shows webserver port settings and status of certificates, package installations
 # -) trigger BMK-Webstatus Package-Install on apply() -> won't register FQDN certificate
 # -) trigger FQDN certificate register and/or renewal on apply()
+# -) change webserver ports, use with care as webgui-session will most likely break
 # -) restart webserices on apply()
 #
 # known bugs/limitations:
 # -) not all files from older versions are checked: bmk-webstatus-package will clean them on install anyway
-# -) change webserver ports disabled, not yet fully implemented the change procedure
 # -) apply will raise error message "failed" on following actions: 
-#    install, register/renew, restart-orig (webui session will break due to lighttpd restart)
+#    install, register/renew, restart-orig, change orig-ports (webui session will break)
 #
 # open tasks
 # -) fill up file-checks and package status for older versions
@@ -31,7 +31,7 @@ ACTION=$1
 INPUT=$2
 
 cfgusrdir="/config/user-data/"
-log="0xffwsle-install.log"
+log="/var/log/0xffwsle.log"
 
 # package file name for download from path http://193.238.158.8/0xFF-BMK-webstatus/builds/$filename
 filename="0xff-bmk-webstatus_4.1_mipsel.deb"
@@ -40,29 +40,170 @@ filename="0xff-bmk-webstatus_4.1_mipsel.deb"
 # DO NOT EDIT BELOW HERE !
 #
 
-echo "EdgeMAX 0xFF-BMK-Webstatus-LetsEncrypt Wizard started $(date +%H:%M:%S.%N)" > $cfgusrdir$log
+#$interface_1100_list='br0.1100,eth0.1100,eth1.1100,eth2.1100,eth3.1100,eth4.1100,eth5.1100,br1.1100,br2.1100';
+#$get_nslookup_from_nodedb=1;       // enables lookup of IPs from cached node database (originally taken from map meta data at map.funkfeuer.at/wien
+#$show_link_to_adminlogin=0;        // enables Link to Routerlogin page (with https-port from config-file)
+#$traceroute_to='78.41.115.228';    // defines destination for traceroute -> should be internet gateway, tunnelserver.funkfeuer.at
+
+#sed -i -r "0,/traceroute_to='.{1,140}'/{s/traceroute_to='.{1,140}'/traceroute_to='11.22.33.44'/}" test
+
+echo "EdgeMAX 0xFF-BMK-Webstatus-LetsEncrypt Wizard started $(date +%H:%M:%S.%N)" >>$log
 
 #base64begin 
 # !dont edit or remove this comment!
 # first run of wizard, so load and install package
-#
-#echo "ITxhcmNoPgpkZWJpYW4tYmluYXJ5ICAgMTQ3NzY0MzIxOCAgMCAgICAgMCAgICAgMTAwNjQ0ICA0
-#K8Z3osampzzSd1UxnOdhB7i7n7ufu5+7n7ufu5+7n7ufu5+7n7uf/w8+/w+vxow3APgMAAo=
-#" | base64 -d > $cfgusrdir/0xff-bmk-webstatus_4.1_mipsel.deb
-#if [[ $? == 0 ]]; then 
-#    echo "extracted package file: "$filename" without error" >> $cfgusrdir$log
-#    ls -al $cfgusrdir/0xff-bmk-webstatus_*.deb >> $cfgusrdir$log
-#else
-#    echo "extraction of package file failed" >> $cfgusrdir$log
-#fi
-#
-# base64 builds/0xff-bmk-webstatus_4.1_mipsel.deb >0xff-bmk-webstatus_4.1_mipsel.deb.base64
+
+echo "Installation started $(date +%H:%M:%S.%N)" >>$log
+[ -f "/config/user-data/0xffwsle-install.log" ] && rm -f /config/user-data/0xffwsle-install.log
+
+# ip2dns file
+if [ ! -f "/config/custom/bin/ip2dns" ]; then
+echo "f0VMRgEBAQABAAAAAAAAAAIACAABAAAAIAdAADQAAACsDgAABRAAEDQAIAAJACgAJAAhAAYAAAA0
+AAAANABAADQAQAAgAQAAIAEAAAUAAAAEAAAAAwAAAFQBAABUAUAAVAFAAA0AAAANAAAABAAAAAEA
+AAAAAABwhAEAAIQBQACEAUAAGAAAABgAAAAEAAAABAAAAAEAAAAAAAAAAABAAAAAQAAkDAAAJAwA
+AAUAAAAAAAEAAQAAACQMAAAkDEEAJAxBAIgAAACsAAAABgAAAAAAAQACAAAAwAEAAMABQADAAUAA
+EAEAABABAAAHAAAABAAAAAQAAABkAQAAZAFAAGQBQAAgAAAAIAAAAAQAAAAEAAAABAAAAJwBAACc
+AUAAnAFAACQAAAAkAAAABAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAC9s
+aWIvbGQuc28uMQAAAAAEAAAAEAAAAAEAAABHTlUAAAAAAAIAAAAGAAAAGgAAAPYBALIAAAAAAAAA
+AAAAAAAAAAAAcIxBAAQAAAAUAAAAAwAAAEdOVQBmz8Ku7kCdz74dosPmcaR2aZvyoQEAAABCAAAA
+DAAAABQGQAANAAAAwAtAAAQAAADQAkAABQAAAJgEQAAGAAAAaANAAAoAAADTAAAACwAAABAAAAAW
+AABwUAxBABUAAAAAAAAAAwAAAIAMQQARAAAAxAVAABIAAAAQAAAAEwAAAAgAAAABAABwAQAAAAUA
+AHACAAAABgAAcAAAQAAKAABwCAAAABEAAHATAAAAEgAAcCEAAAATAABwEQAAABQAAAARAAAAFwAA
+ANQFQAACAAAAQAAAADIAAHBUDEEA/v//b5QFQAD///9vAQAAAPD//29sBUAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEQAAABMAAAAAAAAAAAAAAA0AAAAO
+AAAAAAAAAAIAAAAAAAAAEQAAAAAAAAAQAAAADAAAAAkAAAABAAAACAAAAAQAAAASAAAADwAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFAAAABwAAAAAAAAAAAAAAAwAAAAsAAAAKAAAAAAAA
+AAAAAAAAAAAABgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEQAAAIAKQAAIAAAAEgAPAEwAAAABAAAA
+AAAAABMA8f9/AAAAAAAAAAAAAAASAAAAhgAAAAAAAAAAAAAAEgAAALAAAAAADEAABAAAABEAEgCZ
+AAAAAAAAAAAAAAASAAAAeAAAAAAAAAAAAAAAEgAAAF0AAABQDEEAAAAAABEAGAABAAAAiApAALAA
+AAASAA8AqgAAALAMQQAEAAAAEQAcAC4AAACkCUAA3AAAABIADwBsAAAAAAAAAAAAAAASAAAAZwAA
+AAAAAAAAAAAAEgAAAIwAAAAAAAAAAAAAABIAAACeAAAAAAAAAAAAAAASAAAACwAAABQGQAAAAAAA
+EgANACEAAACgC0AAAAAAABIAAAAzAAAAAAAAAAAAAAAiAAAAAF9fbGliY19jc3VfaW5pdABfX2xp
+YmNfY3N1X2ZpbmkAX19saWJjX3N0YXJ0X21haW4AX19nbW9uX3N0YXJ0X18AbGliYy5zby42AF9E
+WU5BTUlDX0xJTktJTkcAX19STERfTUFQAGZvcmsAZ2V0bmFtZWluZm8Ac3RyY2hyAHByaW50ZgBm
+Z2V0cwBmcmVlYWRkcmluZm8AZmVvZgBnZXRhZGRyaW5mbwBzdGRpbgBfSU9fc3RkaW5fdXNlZABH
+TElCQ18yLjIAR0xJQkNfMi4wAAAAAAEAAQACAAIAAQACAAIAAQABAAIAAQADAAIAAgACAAEAAgAA
+AAAAAQACAEIAAAAQAAAAAAAAABJpaQ0AAAMAvwAAABAAAAAQaWkNAAACAMkAAAAAAAAAAAAAAAAA
+AACwDEEAfgoAAFwMQQB/AwAAYAxBAH8EAABkDEEAfwYAAGgMQQB/BwAAbAxBAH8MAABwDEEAfw0A
+AHQMQQB/DgAAeAxBAH8PAAACABw8XIacJyHgmQPg/70nHAC/rxAAvK80gIKPJQggAAUAQBAlCCAA
+NICZjyUIIAAJ+CADJQggAAEAEQQlCCAABwIQDCUIIAABABEEJQggANACEAwlCCAAHAC/jyUIIAAI
+AOADIAC9JwAAAABBABw8VAyZj1QMnCcjwBwDIXjgA4LAGAAJ+CAD/v8YJ0EADzxcDPmNCAAgA1wM
++CVBAA88YAz5jQgAIANgDPglQQAPPGQM+Y0IACADZAz4JUEADzxoDPmNCAAgA2gM+CVBAA88bAz5
+jQgAIANsDPglQQAPPHAM+Y0IACADcAz4JUEADzx0DPmNCAAgA3QM+CVBAA88eAz5jQgAIAN4DPgl
+IQDgAwEAEQQlCCAAQgAcPHCMnCch+AAAGICEjwAApY8EAKYn+P8BJCTooQPg/70nHICHjyCAiI8l
+CCAAEACorxQAoq8YAL2vMICZjyUIIAAJ+CADJQggAP//ABAlCCAA0P+9JygAs69BABM8wAxikiwA
+v68kALKvIACxrxgAQBQcALCvQQASPEEAETwsDFImMAwxJkEAEDwjiDICxAwCjoOIEQD//zEmKxhR
+AAoAYBABAEIkgBgCACEYQwIAAHmMCfggA8QMAq7EDAKOKxhRAPj/YBQBAEIkAQACJMAMYqIsAL+P
+KACzjyQAso8gALGPHACwjwgA4AMwAL0nQQAEPDQMgowHAEAQJQggAAAAGTwAADknAwAgEyUIIAAI
+ACADNAyEJAgA4AMlCCAAJQggAAj/vSf0AL+v8AC+r+wAsK8h8KAD+ADErzAAwK80AMInAABArAQA
+QKwIAECsDABArBAAQKwUAECsGABArBwAQKwCAAIkPADCrzQAwycwAMIn+ADEjyEoAAAhMGAAIThA
+AMQBEAwlCCAAKADCrygAwo8tAEAUJQggADAAwo8sAMKvLADCjxQAQowhGEAAVADCJxAAoK8UAKCv
+AwAEJBgApK8hIGAAEAAFJCEwQAAQAAckuAEQDCUIIABAAAI8EAxQJCwAwo8UAEKMIRhAAGQAwicQ
+AKCvFACgrwoABCQYAKSvISBgABAABSQhMEAAgAAHJLgBEAwlCCAABABAECUIIABUAMInWAIQCCUI
+IABkAMInVADDJyEgAAIhKGAAITBAAKgBEAwlCCAAMADCjyEgQADAARAMJQggACHowAP0AL+P8AC+
+j+wAsI/4AL0nCADgAyUIIADI/70nNAC/rzAAvq8h8KADOADErzwAxa+TAhAIJQggAEEAAjywDEKM
+HADDJyEgYAAQAAUkITBAAKwBEAwlCCAAGQBAECUIIAAcAMInISBAAAoABSS0ARAMJQggABgAwq8Y
+AMKPAwBAECUIIAAYAMKPAABAoBwAwoMLAEAQJQggALwBEAwlCCAABwBAFCUIIAAcAMInISBAABQC
+EAwlCCAAmgIQCCUIIABBAAI8sAxCjCEgQACwARAMJQggANj/QBAlCCAAIejAAzQAv48wAL6POAC9
+JwgA4AMlCCAACADgAyUIIAACABw86IGcJyHgmQPI/70nNAC/rzAAta8sALSvKACzryQAsq8gALGv
+HACwrxAAvK8kgJmPIZiAACGgoAAJ+CADIajAABAAvI8lCCAAKICRjyiAko8lCCAAI5BRAoOQEgAK
+AEASIYAAAAAAOY4BABAmISBgAiEogAIJ+CADITCgAisQEgL4/0AUBAAxJjQAv48wALWPLAC0jygA
+s48kALKPIACxjxwAsI8IAOADOAC9JyUIIAAlCCAAQQACPCQMWYzY/70n//8CJCQAv68gALGvCQAi
+ExwAsK9BABA8JAwQJv//ESQJ+CAD/P8QJgAAGY78/zEXJQggACQAv48gALGPHACwjwgA4AMoAL0n
+JQggACUIIAAlCCAAEICZjyF44AMJ+CADEQAYJAAAAAAAAAAAAAAAAAAAAAACABw8sICcJyHgmQPg
+/70nHAC/rxAAvK8BABEEJQggAOABEAwlCCAAHAC/jyUIIAAIAOADIAC9JwAAAAAAAAAAAQACAAAA
+AAAAAAAAAAAAAGlwOiVzIGRuczolcwoAAAAAAAAA/////wAAAAD/////AAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACABkAAgAZAAIAGQACABkAAgAZAAIAGQACABkAA
+gAZAAAAAAAAAAAAAAAAAgKQJQACICkAAgApAABQGQAAkDEEAAAAAAKALQAAAAAAAAAAAAEdDQzog
+KERlYmlhbiA0LjYuMy0xNCkgNC42LjMAR0NDOiAoRGViaWFuIDQuNC43LTIpIDQuNC43AAAAAFAI
+QAAAAAHA/P///wAAAAAAAAAA+AAAAB4AAAAfAAAApAlAAAAAAMD8////AAAAAAAAAAA4AAAAHgAA
+AB8AAACACkAAAAAAAAAAAAAAAAAAAAAAAAAAAAAdAAAAHwAAAIgKQAAAAD+A/P///wAAAAAAAAAA
+OAAAAB0AAAAfAAAAQQ8AAABnbnUAAQcAAAAEAQAuc3ltdGFiAC5zdHJ0YWIALnNoc3RydGFiAC5p
+bnRlcnAALm5vdGUuQUJJLXRhZwAucmVnaW5mbwAubm90ZS5nbnUuYnVpbGQtaWQALmR5bmFtaWMA
+Lmhhc2gALmR5bnN5bQAuZHluc3RyAC5nbnUudmVyc2lvbgAuZ251LnZlcnNpb25fcgAucmVsLmR5
+bgAucmVsLnBsdAAuaW5pdAAudGV4dAAuTUlQUy5zdHVicwAuZmluaQAucm9kYXRhAC5laF9mcmFt
+ZQAuY3RvcnMALmR0b3JzAC5qY3IALmRhdGEALnJsZF9tYXAALmdvdC5wbHQALmdvdAAuc2RhdGEA
+LmJzcwAuY29tbWVudAAucGRyAC5nbnUuYXR0cmlidXRlcwAubWRlYnVnLmFiaTMyAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABsAAAABAAAAAgAAAFQBQABUAQAADQAA
+AAAAAAAAAAAAAQAAAAAAAAAjAAAABwAAAAIAAABkAUAAZAEAACAAAAAAAAAAAAAAAAQAAAAAAAAA
+MQAAAAYAAHACAAAAhAFAAIQBAAAYAAAAAAAAAAAAAAAEAAAAGAAAADoAAAAHAAAAAgAAAJwBQACc
+AQAAJAAAAAAAAAAAAAAABAAAAAAAAABNAAAABgAAAAIAAADAAUAAwAEAABABAAAIAAAAAAAAAAQA
+AAAIAAAAVgAAAAUAAAACAAAA0AJAANACAACYAAAABwAAAAAAAAAEAAAABAAAAFwAAAALAAAAAgAA
+AGgDQABoAwAAMAEAAAgAAAABAAAABAAAABAAAABkAAAAAwAAAAIAAACYBEAAmAQAANMAAAAAAAAA
+AAAAAAEAAAAAAAAAbAAAAP///28CAAAAbAVAAGwFAAAmAAAABwAAAAAAAAACAAAAAgAAAHkAAAD+
+//9vAgAAAJQFQACUBQAAMAAAAAgAAAABAAAABAAAAAAAAACIAAAACQAAAAIAAADEBUAAxAUAABAA
+AAAHAAAAAAAAAAQAAAAIAAAAkQAAAAkAAAACAAAA1AVAANQFAABAAAAABwAAAA4AAAAEAAAACAAA
+AJoAAAABAAAABgAAABQGQAAUBgAAaAAAAAAAAAAAAAAABAAAAAAAAACVAAAAAQAAAAYAAACABkAA
+gAYAAKAAAAAAAAAAAAAAACAAAAAAAAAAoAAAAAEAAAAGAAAAIAdAACAHAACABAAAAAAAAAAAAAAQ
+AAAAAAAAAKYAAAABAAAABgAAAKALQACgCwAAIAAAAAAAAAAAAAAABAAAAAAAAACyAAAAAQAAAAYA
+AADAC0AAwAsAADgAAAAAAAAAAAAAAAQAAAAAAAAAuAAAAAEAAAACAAAAAAxAAAAMAAAgAAAAAAAA
+AAAAAAAQAAAAAAAAAMAAAAABAAAAAgAAACAMQAAgDAAABAAAAAAAAAAAAAAABAAAAAAAAADKAAAA
+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
+pAlAANwAAAASAA8AOAIAAAAAAAAAAAAAEQAAAEECAAAgB0AAAAAAABIADwBJAgAAAAAAAAAAAAAR
+AAAAWAIAAAAAAAAAAAAAEgAAAG8CAAAAAAAAAAAAABIAAAB/AgAAAAAAAAAAAAASAAAAlwIAACAH
+QAAAAAAAEAAPAJ4CAAAAAAAAAAAAACAAAACyAgAAAAAAAAAAAAASAAAAyQIAAIAMQQAAAAAAEQAa
+AN8CAACsDEEAAAAAABAA8f/lAgAAFAZAAAAAAAASAA0A6wIAAHCMQQAAAAAAEADx/wBobHQAY3J0
+c3R1ZmYuYwBfX0NUT1JfTElTVF9fAF9fRFRPUl9MSVNUX18AX19KQ1JfTElTVF9fAF9fZG9fZ2xv
+YmFsX2R0b3JzX2F1eABjb21wbGV0ZWQuNTMzOQBkdG9yX2lkeC41MzQxAGZyYW1lX2R1bW15AF9f
+Q1RPUl9FTkRfXwBfX0ZSQU1FX0VORF9fAF9fSkNSX0VORF9fAF9fZG9fZ2xvYmFsX2N0b3JzX2F1
+eABpcDJkbnMuYwBwcmludF9ob3N0AF9QUk9DRURVUkVfTElOS0FHRV9UQUJMRV8AX19pbml0X2Fy
+cmF5X2VuZABfRFlOQU1JQwBfX2luaXRfYXJyYXlfc3RhcnQAX19saWJjX2NzdV9maW5pAF9EWU5B
+TUlDX0xJTktJTkcAZGF0YV9zdGFydABwcmludGZAQEdMSUJDXzIuMABmZ2V0c0BAR0xJQkNfMi4w
+AF9lZGF0YQBfZmluaQBfX0RUT1JfRU5EX18AX19kYXRhX3N0YXJ0AF9fZ21vbl9zdGFydF9fAF9f
+ZHNvX2hhbmRsZQBfSU9fc3RkaW5fdXNlZABmZW9mQEBHTElCQ18yLjAAX2ZkYXRhAHN0cmNockBA
+R0xJQkNfMi4wAF9fbGliY19zdGFydF9tYWluQEBHTElCQ18yLjAAX19STERfTUFQAF9fbGliY19j
+c3VfaW5pdABzdGRpbkBAR0xJQkNfMi4wAF9lbmQAX19ic3Nfc3RhcnQAbWFpbgBfZ3BfZGlzcABf
+X3N0YXJ0AF9fZ251X2xvY2FsX2dwAGdldG5hbWVpbmZvQEBHTElCQ18yLjIAZm9ya0BAR0xJQkNf
+Mi4wAGZyZWVhZGRyaW5mb0BAR0xJQkNfMi4wAF9mdGV4dABfSnZfUmVnaXN0ZXJDbGFzc2VzAGdl
+dGFkZHJpbmZvQEBHTElCQ18yLjAAX0dMT0JBTF9PRkZTRVRfVEFCTEVfAF9mYnNzAF9pbml0AF9n
+cAA=
+" | base64 -d > $cfgusrdir""ip2dns
+    if [[ $? == 0 ]]; then 
+        echo "extracted package file: ip2dns without error" >> $log
+        [ -d "/config/custom" ] || mkdir /config/custom
+        [ -d "/config/custom/bin" ] || mkdir /config/custom/bin
+        mv $cfgusrdir""ip2dns /config/custom/bin/ip2dns
+        chmod 755 /config/custom/bin/ip2dns
+    else
+        echo "extraction of file ip2dns failed" >> $log
+    fi
+fi
 
 # simulate base64 extraction - directly download the package file
-echo "Start Package-Download..." >> $cfgusrdir$log
-curl -o /config/user-data/$filename http://193.238.158.8/0xFF-BMK-webstatus/builds/$filename >> $cfgusrdir$log
-echo "Download done:" >> $cfgusrdir$log
-ls -al $cfgusrdir/0xff-bmk-webstatus_*.deb >> $cfgusrdir$log
+echo "Start Package-Download..." >> $log
+curl -o $cfgusrdir$filename http://193.238.158.8/0xFF-BMK-webstatus/builds/$filename >> $log
+echo "Download done:" >> $log
 
 # remove installtion block
 sed -i '/^#base64begin/,/^#base64end$/d' $0
@@ -103,7 +244,7 @@ onlinecheck () {
 
 # function called when you click the wizard
 load () {
-    echo "Load procedure..." >> $cfgusrdir$log
+    echo "Load procedure..." >> $log
     ########
     ### package status
     # could be: 
@@ -257,15 +398,20 @@ esac
     ##########
     ### CERT Details
     #get current public FQDN
-    if [ $(ps aux | grep olsr | grep -v grep | wc -l) -eq 0 ]; then
+    if [ ! -f "/config/custom/bin/ip2dns" ]; then
+        DETAIL="ip2dns missing"
+    elif [ $(ps aux | grep olsr | grep -v grep | wc -l) -eq 0 ]; then
         # it works only if txtinfo Plugin is activated in the OLSR Wizard!
         PUBLICIP=$(echo $(curl -s -o- http://127.0.0.1:2006/interfaces | head -n3 | tail -n1 | awk {'print $5'}) | /config/custom/bin/ip2dns | awk {'print $2'} | sed -e s/dns.//)
+        DETAIL="from olsrd/txtinfo"
     else
         # if OLSR is not activated or not used - we get the "public" IP from the default route iface
         PUBLICIP=$(echo $(/sbin/ifconfig $(ip r | grep default | tail -n1 | awk {'print $5'}) | head -n2 | tail -n1 | awk {'print $2'} | sed -e s/addr://) | /config/custom/bin/ip2dns | awk {'print $2'} | sed -e s/dns.//)
+        DETAIL="from ifconfig/def.route"
     fi
     [ "$PUBLICIP" ] && ledetails=',"currentfqdn":"'$PUBLICIP'"' || ledetails=',"currentfqdn":"not available"'
-    
+    ledetails=$ledetails',"currentdet":"'$DETAIL'"'
+
     #get current register from domain.csr
     if [ -f "/config/letsencrypt/domain.csr" ] && [ ! $(stat -c %s /config/letsencrypt/domain.csr) -eq 0 ]; then
         CURRENT=$(openssl req -in /config/letsencrypt/domain.csr -noout -text | grep Subject | grep CN= | awk -F'=' {'print $2'})
@@ -401,13 +547,13 @@ apply () {
     #######
     ### installation process
     if [[ "$installbmkpackage" == "on" ]]; then
-        echo "Start Package-Install..." >> $cfgusrdir$log
+        echo "Start Package-Install..." >> $log
         if [ -f "$cfgusrdir$filename" ]; then
-            echo "Execute package..." >> $cfgusrdir$log
-            sudo dpkg -i $cfgusrdir$filename >> $cfgusrdir$log
-            echo "...wizard install-procedure finished" >> $cfgusrdir$log
+            echo "Execute package..." >> $log
+            sudo dpkg -i $cfgusrdir$filename >> $log
+            echo "...wizard install-procedure finished" >> $log
         else
-            echo "Installation package file "$cfgusrdir$filename" not found.." >> $cfgusrdir$log
+            echo "Installation package file "$cfgusrdir$filename" not found.." >> $log
         fi
     fi
     ### End installation process
@@ -416,7 +562,7 @@ apply () {
     #######
     ### registration process
     if [[ "$registercert" == "on" ]]; then
-        echo "Start Registration..." >> $cfgusrdir$log
+        echo "Start Registration..." >> $log
         if [ $((onlinecheck)) != 0 ] ||
            [ ! -f "/config/letsencrypt/domain.key" ] ||
            [ $(stat -c %s /config/letsencrypt/domain.key) -eq 0 ] ||
@@ -424,9 +570,9 @@ apply () {
            [ $(stat -c %s /config/letsencrypt/account.key) -eq 0 ] ||
            [ ! -d "/config/custom/www/.well-known/acme-challenge/" ]
         then
-            echo "error: offline, missing or empty files, or challenge-directory!" >> $cfgusrdir$log
+            echo "error: offline, missing or empty files, or challenge-directory!" >> $log
         else
-            echo "Retrieving IP and FQDN..." >> $cfgusrdir$log
+            echo "Retrieving IP and FQDN..." >> $log
             # read activated PublicIP from OLSR Daemon (should be optimized in the future)
             if [ $(ps aux | grep olsr | grep -v grep | wc -l) -eq 0 ]; then
                 # it works only if txtinfo Plugin is activated in the OLSR Wizard!
@@ -435,31 +581,31 @@ apply () {
                 # if OLSR is not activated or not used - we get the "public" IP from the default route iface
                 PUBLICIP=$(echo $(/sbin/ifconfig $(ip r | grep default | tail -n1 | awk {'print $5'}) | head -n2 | tail -n1 | awk {'print $2'} | sed -e s/addr://) | /config/custom/bin/ip2dns | awk {'print $2'} | sed -e s/dns.//)
             fi
-            echo "...lookup result: ,"$PUBLICIP"," >> $cfgusrdir$log
+            echo "...lookup result: ,"$PUBLICIP"," >> $log
             # if domain.csr exists, check the FQDN it is registered for
             if [ -f "/config/letsencrypt/domain.csr" ] && [ ! $(stat -c %s /config/letsencrypt/domain.csr) -eq 0 ] && [ "$PUBLICIP" ]; then
                 CURRENT=$(openssl req -in /config/letsencrypt/domain.csr -noout -text | grep Subject | grep CN= | awk -F'=' {'print $2'})
-                echo "Existing domain.csr is for FQDN: ,"$CURRENT"," >> $cfgusrdir$log
+                echo "Existing domain.csr is for FQDN: ,"$CURRENT"," >> $log
                 if [ "$CURRENT" != "$PUBLICIP" ] && [ "$CURRENT" ]; then
-                    echo "FQDN changed, creating new domain-csr..." >> $cfgusrdir$log
-                    openssl req -new -sha256 -key /config/letsencrypt/domain.key -subj "/CN=$PUBLICIP" | tee /config/letsencrypt/domain.csr >> $cfgusrdir$log
+                    echo "FQDN changed, creating new domain-csr..." >> $log
+                    openssl req -new -sha256 -key /config/letsencrypt/domain.key -subj "/CN=$PUBLICIP" | tee /config/letsencrypt/domain.csr >> $log
                 elif [ ! "$CURRENT" ]; then
-                    echo "Error checking current csr-file" >> $cfgusrdir$log
+                    echo "Error checking current csr-file" >> $log
                 else
-                    echo "New registration not needed" >> $cfgusrdir$log
+                    echo "New registration not needed" >> $log
                 fi
             elif [ "$PUBLICIP" ]; then
                 # correctly register csr file
-                echo "Creating domain-csr..." >> $cfgusrdir$log
-                openssl req -new -sha256 -key /config/letsencrypt/domain.key -subj "/CN=$PUBLICIP" | tee /config/letsencrypt/domain.csr >> $cfgusrdir$log
+                echo "Creating domain-csr..." >> $log
+                openssl req -new -sha256 -key /config/letsencrypt/domain.key -subj "/CN=$PUBLICIP" | tee /config/letsencrypt/domain.csr >> $log
             else
-                echo "FQDN not known!" >> $cfgusrdir$log
+                echo "FQDN not known!" >> $log
             fi
 
             # Run letsrenew.sh file for initial connect and/or renewal, doesn't matter
-            echo "Starting registration/renewal procedure..." >> $cfgusrdir$log
-            bash /config/letsencrypt/letsrenew.sh >> $cfgusrdir$log
-            echo "Done!" >> $cfgusrdir$log
+            echo "Starting registration/renewal procedure..." >> $log
+            bash /config/letsencrypt/letsrenew.sh >> $log
+            echo "Done!" >> $log
             restartcustomenabled="on"
         fi
     fi
@@ -514,39 +660,90 @@ apply () {
     # 1->2, 1->3, 1->4, 2->3, 2->4, 3->4
     # orig server: check for port change
     error=0
-    if [ ! "$orighttpportnew" ] || [ ! "$orighttpportsnew" ] || [ ! "$customhttpportnew" ] || [ ! "$customhttpsportnew" ]; then
-        echo "Not all 4 Port-Values in result.json" >> $cfgusrdir$log
+    if [ ! "$orighttpportnew" ] || [ ! "$orighttpsportnew" ] || [ ! "$customhttpportnew" ] || [ ! "$customhttpsportnew" ]; then
+        echo "Not all 4 Port-Values in result.json" >> $log
     elif [ "$orighttpport" != "$orighttpportnew" ] || [ "$orighttpsport" != "$orighttpsportnew" ]; then
-        echo "orig-http-ports change, check for conflicts..." >> $cfgusrdir$log
+        echo "orig-http-ports change, check for conflicts..." >> $log
         if [ "$orighttpportnew" == "$orighttpsportnew" ]; then
-            echo "error: orig http = https" >> $cfgusrdir$log
+            echo "error: orig http = https" >> $log
             error=1
         fi
         if [ "$orighttpportnew" == "$customhttpportnew" ]; then
-            echo "error: orig http = custom http" >> $cfgusrdir$log
+            echo "error: orig http = custom http" >> $log
             error=2
         fi
         if [ "$orighttpsportnew" == "$customhttpsportnew" ]; then
-            echo "error: orig https = custom https" >> $cfgusrdir$log
+            echo "error: orig https = custom https" >> $log
             error=4
         fi
         if [ "$orighttpsportnew" == "$customhttpportnew" ]; then
-            echo "error: orig https = custom http" >> $cfgusrdir$log
+            echo "error: orig https = custom http" >> $log
             error=5
         fi
         if [ "$orighttpportnew" == "$customhttpsportnew" ]; then
-            echo "error: orig http = custom https" >> $cfgusrdir$log
+            echo "error: orig http = custom https" >> $log
             error=6
         fi
         # change orig server ports
         if [ "$error" == "0" ]; then
             # it is save to change orig server ports
-            echo "orig ports change approved: new ports: "$orighttpportnew"/"$orighttpsportnew >> $cfgusrdir$log
+            echo "orig ports change approved: new ports: "$orighttpportnew"/"$orighttpsportnew >> $log
             #if needed, shut down custom webserver first to free up the ports in "old conflict" situation
-            #restartcustomenabled="on"
-            ### 
-            ### place change scripts right here
-            ###
+            echo "Shutting down custom lighttpd webserver" >> $log
+            sudo /sbin/start-stop-daemon --stop --pidfile /var/run/lighttpd_custom.pid
+            if [ -f "/var/run/lighttpd_custom.pid" ]; then
+              rm /var/run/lighttpd_custom.pid
+            fi
+echo "Changing orig ports via command wrapper" >> $log
+cmd="/opt/vyatta/sbin/vyatta-cfg-cmd-wrapper"
+tfile=$(mktemp)
+(
+$cmd begin
+ret=0
+if [ "$orighttpport" != "$orighttpportnew" ] && [ $ret == 0 ]; then
+    $cmd set service gui http-port $orighttpportnew || ret=1
+fi
+if [ "$orighttpsport" != "$orighttpsportnew" ] && [ $ret == 0 ]; then
+    $cmd set service gui https-port $orighttpsportnew || ret=1
+fi
+if [ $ret == 0 ]; then
+    $cmd commit || ret=1
+fi
+if [ $ret == 0 ]; then
+    $cmd save || ret=1
+fi
+$cmd end
+exit $ret
+) >$tfile 2>&1
+ret=$?
+output=$(cat $tfile)
+rm -f $tfile
+echo $output >> $log
+
+#echo "Changing orig ports via script-tempplate" >> $log
+##errors:
+##Changing orig ports via script-template
+##calling validateSetPath() without config session
+##calling cfgPathGetChildNodesDA() without config session
+##Saving configuration to '/config/config.boot'...
+##Done
+#echo '#!/bin/vbash' > /tmp/func.sh
+#echo "source /opt/vyatta/etc/functions/script-template" >>/tmp/func.sh
+#echo "configure" >>/tmp/func.sh
+#[ "$orighttpport" != "$orighttpportnew" ]   && echo "set service gui http-port "$orighttpportnew >>/tmp/func.sh
+#[ "$orighttpsport" != "$orighttpsportnew" ] && echo "set service gui https-port "$orighttpsportnew >>/tmp/func.sh
+#echo "commit" >>/tmp/func.sh
+#echo "save" >>/tmp/func.sh
+#echo "exit" >>/tmp/func.sh
+#chmod 755 /tmp/func.sh
+#vbash /tmp/func.sh >> $log
+#rm -f /tmp/func.sh
+
+            # request start of custom server
+            restartcustomenabled="on"
+            #orig server restarted due to port change, no second restart needed
+            restartorigenabled="off"
+
             # after change was executed, check again for real settings
             # this ensures the checks agains custom port settings are really acurate!
             if [ $(grep "http-port" /config/config.boot | wc -l) -eq 1 ]; then
@@ -559,51 +756,74 @@ apply () {
             else
                 orighttpsportnew=443
             fi
-            echo "orig ports change executed: current ports: "$orighttpportnew"/"$orighttpsportnew >> $cfgusrdir$log
+            echo "orig ports change executed: current ports: "$orighttpportnew"/"$orighttpsportnew >> $log
         else
-            echo "error "$error", orig-ports remain on "$orighttpport"/"$orighttpsport"." >> $cfgusrdir$log
+            echo "error "$error", orig-ports remain on "$orighttpport"/"$orighttpsport"." >> $log
         fi
     fi
     
     # check custom server port change
     error=0
-    if [ ! "$orighttpportnew" ] || [ ! "$orighttpportsnew" ] || [ ! "$customhttpportnew" ] || [ ! "$customhttpsportnew" ]; then
-        echo "Not all 4 Port-Values in result.json" >> $cfgusrdir$log
+    if [ ! "$orighttpportnew" ] || [ ! "$orighttpsportnew" ] || [ ! "$customhttpportnew" ] || [ ! "$customhttpsportnew" ]; then
+        echo "Not all 4 Port-Values in result.json" >> $log
     elif [ "$customhttpportnew" != "0" ] && [ "$customhttpsportnew" != "0" ]; then
       if [ "$customhttpport" != "$customhttpportnew" ] || [ "$customhttpsport" != "$customhttpsportnew" ]; then
-        echo "custom-http-ports change, check for conflicts..." >> $cfgusrdir$log
-        if [ ! "$orighttpportnew" ] || [ ! "$orighttpportsnew" ] || [ ! "$customhttpportnew" ] || [ ! "$customhttpsportnew" ]; then
-            echo "error: one of the 4 port values is empty" >> $cfgusrdir$log
+        echo "custom-http-ports change, check for conflicts..." >> $log
+        if [ ! "$orighttpportnew" ] || [ ! "$orighttpsportnew" ] || [ ! "$customhttpportnew" ] || [ ! "$customhttpsportnew" ]; then
+            echo "error: one of the 4 port values is empty" >> $log
             error=98
         fi
         if [ "$customhttpportnew" == "$customhttpsportnew" ]; then
-            echo "error: custom http = https" >> $cfgusrdir$log
+            echo "error: custom http = https" >> $log
             error=30
         fi
         if [ "$orighttpportnew" == "$customhttpportnew" ]; then
-            echo "error: orig http = custom http" >> $cfgusrdir$log
+            echo "error: orig http = custom http" >> $log
             error=20
         fi
         if [ "$orighttpsportnew" == "$customhttpsportnew" ]; then
-            echo "error: orig https = custom https" >> $cfgusrdir$log
+            echo "error: orig https = custom https" >> $log
             error=40
         fi
         if [ "$orighttpsportnew" == "$customhttpportnew" ]; then
-            echo "error: orig https = custom http" >> $cfgusrdir$log
+            echo "error: orig https = custom http" >> $log
             error=50
         fi
         if [ "$orighttpportnew" == "$customhttpsportnew" ]; then
-            echo "error: orig http = custom https" >> $cfgusrdir$log
+            echo "error: orig http = custom https" >> $log
             error=60
         fi
         
         # change custom server ports
         if [ "$error" == "0" ]; then
             # it is save to change custom server ports
-            echo "custom ports change approved: new ports: "$customhttpportnew"/"$customhttpsportnew >> $cfgusrdir$log
-            #restartcustomenabled="on"
+            echo "custom ports change approved: new ports: "$customhttpportnew"/"$customhttpsportnew >> $log
+            # check custom ports from conf-file(s)
+            if [ "$customhttpport" != "$customhttpportnew" ] &&
+               [ -f "/config/custom/lighttpd/lighttpd_custom.conf" ] &&
+               [ $(grep -iE 'server.port.{0,4}=.{0,4}'$customhttpport /config/custom/lighttpd/conf-enabled/10-ssl.conf | wc -l) -eq 1 ] &&
+               [ $(grep -iE '\]:'$customhttpport'"' /config/custom/lighttpd/conf-enabled/10-ssl.conf | wc -l) -eq 1 ]; then
+                echo "Current http settings located, changing ports in 10-ssl.conf" >> $log
+                sed -i -r 's/server.port.{0,4}=.{0,4}'$customhttpport'/server.port = '$customhttpportnew'/' /config/custom/lighttpd/conf-enabled/10-ssl.conf
+                sed -i -r 's/\]:'$customhttpport'"/\]:'$customhttpportnew'"/' /config/custom/lighttpd/conf-enabled/10-ssl.conf
+                restartcustomenabled="on"
+            else
+                echo "Current http setting not found, nothing changed where!" >> $log
+            fi
+
+            if [ "$customhttpsport" != "$customhttpsportnew" ] &&
+               [ -f "/config/custom/lighttpd/lighttpd_custom.conf" ] &&
+               [ $(grep -iE ':'$customhttpsport'"' /config/custom/lighttpd/conf-enabled/10-ssl.conf | wc -l) -eq 2 ]
+               [ $(grep -iE ':'$customhttpsport'\$1"' /config/custom/lighttpd/conf-enabled/10-ssl.conf | wc -l) -eq 1 ]; then
+                echo "Current https settings located, changing ports in 10-ssl.conf" >> $log
+                sed -i -r 's/:'$customhttpsport'"/:'$customhttpsportnew'"/' /config/custom/lighttpd/conf-enabled/10-ssl.conf
+                sed -i -r 's/:'$customhttpsport'\$1"/:'$customhttpsportnew'\$1"/' /config/custom/lighttpd/conf-enabled/10-ssl.conf
+                restartcustomenabled="on"
+            else
+                echo "Current https setting not found, nothing changed where!" >> $log
+            fi
         else
-            echo "error "$error", custom ports remain on "$customhttpport"/"$customhttpsport"." >> $cfgusrdir$log
+            echo "error "$error", custom ports remain on "$customhttpport"/"$customhttpsport"." >> $log
         fi
       fi
     fi
@@ -614,18 +834,15 @@ apply () {
     ### Restart/Start procedures
     if [[ "$restartcustomenabled" == "on" ]]; then
         # Restarting custom lighttpd webserver
-        echo "Restarting custom lighttpd webserver" >> $cfgusrdir$log
+        echo "Shutting down custom lighttpd webserver" >> $log
         sudo /sbin/start-stop-daemon --stop --pidfile /var/run/lighttpd_custom.pid
         if [ -f "/var/run/lighttpd_custom.pid" ]; then
           rm /var/run/lighttpd_custom.pid
         fi
-        sudo /sbin/start-stop-daemon --start --quiet \
-              --pidfile /var/run/lighttpd_custom.pid \
-              --exec /usr/sbin/lighttpd -- -f /config/custom/lighttpd/lighttpd_custom.conf
     fi
     if [[ "$restartorigenabled" == "on" ]]; then
         # Restarting original lighttpd webserver for EdgeOS
-        echo "Restarting ORIGINAL lighttpd webserver" >> $cfgusrdir$log
+        echo "Restarting ORIGINAL lighttpd webserver" >> $log
         sudo /sbin/start-stop-daemon --stop --pidfile /var/run/lighttpd.pid
         if [ -f "/var/run/lighttpd.pid" ]; then
           rm /var/run/lighttpd.pid
@@ -634,12 +851,25 @@ apply () {
               --pidfile /var/run/lighttpd.pid \
               --exec /usr/sbin/lighttpd -- -f /etc/lighttpd/lighttpd.conf
     fi
+    if [[ "$restartcustomenabled" == "on" ]]; then
+        # Restarting custom lighttpd webserver
+        echo "Starting custom lighttpd webserver" >> $log
+        sudo /sbin/start-stop-daemon --start --quiet \
+              --pidfile /var/run/lighttpd_custom.pid \
+              --exec /usr/sbin/lighttpd -- -f /config/custom/lighttpd/lighttpd_custom.conf
+    fi
     ### Restart/Start procedures END
     #######
 
     # for debugging purposes
     cp $INPUT /tmp/result.json
-    echo "{\"success\":\"1\"}"
+
+    # $ret and $output comes from port change
+    if [ "$ret" == "1" ]; then
+        echo "{\"success\":\"0\",\"error\": \"${output//\"/\'}\"}"
+    else
+        echo "{\"success\":\"1\"}"
+    fi
 }
 
 case "$ACTION" in
@@ -651,4 +881,4 @@ case "$ACTION" in
         ;;
 esac
 
-echo "EdgeMAX 0xFF-BMK-Webstatus-LetsEncrypt Wizard ended $(date +%H:%M:%S.%N)" >> $cfgusrdir$log
+echo "EdgeMAX 0xFF-BMK-Webstatus-LetsEncrypt Wizard ended $(date +%H:%M:%S.%N)" >> $log
