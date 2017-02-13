@@ -17,23 +17,28 @@ Works on EdgeRouter and EdgeRouter X / X-SFP (system version 1.7.0+)
     <tr><td style="vertical-align:middle">Let's Encrypt:</td> <td><input style="right:10px" id="lestatus" name="lestatus" type="text" size="60" disabled /></td></tr>
     <tr><td style="vertical-align:middle">Certificates:</td>  <td><input style="right:10px" id="cestatus" name="cestatus" type="text" size="60" disabled /></td></tr>
     <tr><td style="vertical-align:middle">Orig-Server-Ports:</td><td>
-       <input style="right:10px" id="orighttpport"  name="orighttpport"  type="number" size="6" disabled />
-       <input style="right:10px" id="orighttpsport" name="orighttpsport" type="number" size="6" disabled /> (WebGUI!!)
+       <input style="right:10px" id="orighttpport"  name="orighttpport"  type="number" size="6" />
+       <input style="right:10px" id="orighttpsport" name="orighttpsport" type="number" size="6" /> (WebGUI!!)
     </td></tr>
     <tr><td style="vertical-align:middle">Custom-Server-Ports:</td><td>
-       <input style="right:10px" id="customhttpport"  name="customhttpport"  type="number" size="6" disabled /> 
-       <input style="right:10px" id="customhttpsport" name="customhttpsport" type="number" size="6" disabled /> (Cert-Check!!)
+       <input style="right:10px" id="customhttpport"  name="customhttpport"  type="number" size="6" /> 
+       <input style="right:10px" id="customhttpsport" name="customhttpsport" type="number" size="6" /> (Cert-Check!!)
     </td></tr>
     <tr><td style="vertical-align:middle" colspan=2>
-       Changing Ports will be a future feature of this wizard. 
-       By now, BMK-Webpackage will migrate original webserver to ports 81/8443 to install custom webserver on ports 80/443.
+       Change ports with care!<br>
+       Lets-Encrypt registration and renewal needs custom-server http-port to be 80.<br>
+       WebGui breaks on changing orig-server https-port** OR on restarting orig-server**<br>
+       Installing BMK-Webpackage will migrate original webserver to ports 81/8443 to install custom webserver on ports 80/443.**<br>
+       <br>
+       ** this will result in the error message "apply failed"<br>
     </td></tr>
-    <tr><td style="vertical-align:middle">Current DNS</td><td><input style="right:10px" id="currentfqdn" name="currentfqdn" type="text" size="60" disabled /></td></tr>
-    <tr><td style="vertical-align:middle">Domain-Key FQDN</td><td><input style="right:10px" id="domainfqdn" name="domainfqdn" type="text" size="60" disabled /></td></tr>
-    <tr><td style="vertical-align:middle">Certificate FQDN</td><td><input style="right:10px" id="certfqdn" name="certfqdn" type="text" size="60" disabled /> </td></tr>
-    <tr><td style="vertical-align:middle">Certificate Validity</td><td><input style="right:10px" id="certfrom" name="certfrom" type="text" size="20" disabled /> 
-	                                      to <input style="right:10px" id="certuntil" name="certuntil" type="text" size="20" disabled /> 
-										  <input style="right:10px" id="certexpire" name="certexpire" type="text" size="15" disabled /> </td></tr>
+    <tr><td style="vertical-align:middle">Current DNS</td><td><input style="right:10px" id="currentfqdn" name="currentfqdn" type="text" size="40" disabled /><input style="right:10px" id="currentdet" name="currentdet" type="text" size="15" disabled /></td></tr>
+    <tr><td style="vertical-align:middle">Domain-Key FQDN</td><td><input style="right:10px" id="domainfqdn" name="domainfqdn" type="text" size="40" disabled /></td></tr>
+    <tr><td style="vertical-align:middle">Certificate FQDN</td><td><input style="right:10px" id="certfqdn" name="certfqdn" type="text" size="40" disabled /> </td></tr>
+    <tr><td style="vertical-align:middle">Certificate Validity</td><td>
+                                          <input style="right:10px" id="certfrom" name="certfrom" type="text" size="20" disabled /> 
+                                       to <input style="right:10px" id="certuntil" name="certuntil" type="text" size="20" disabled /> 
+                                          <input style="right:10px" id="certexpire" name="certexpire" type="text" size="15" disabled /> </td></tr>
   </table>
 </div>
 
@@ -110,32 +115,107 @@ Works on EdgeRouter and EdgeRouter X / X-SFP (system version 1.7.0+)
 </div>
 <br><br>
 <script>
-function validate() {
+function disable_group(group) {
+    var nodes = document.getElementById(group).getElementsByTagName('*');
+    for(var i=0; i<nodes.length; i++) { 
+        if (nodes[i].name == null) {
+        } else if (nodes[i].name.match(/status/)) {
+            if (nodes[i].value.match(/err/)) {
+                nodes[i].style.color = "red";
+            } else if (nodes[i].value.match(/old|link|missing/)) {
+                nodes[i].style.color = "orange";
+            } else if (nodes[i].value.match(/ok/)) {
+                nodes[i].style.color = "green";
+            }
+        }
+        nodes[i].disabled = true; 
+    }
 }
-document.onchange=function(){
+function colors() {
     var input = document.getElementById('pkgstatus');
-    if(input.value.match(/error/)) {
+    input.style.color = "black";
+    if (input.value.match(/error/)) {
         input.style.color = "red";
         //disable();
     } else if (input.value.match(/success/)) {
         input.style.color = "green";
         //enable();
     }
+    // cert expiary colors
+    var certexpire = document.getElementById('certexpire');
+    var certfrom = document.getElementById('certfrom');
+    var certuntil = document.getElementById('certuntil');
+    certexpire.style.color = "black";
+    certfrom.style.color   = "black";
+    certuntil.style.color  = "black";
+    if(certexpire.value.match(/expired/)) {
+        certexpire.style.color = "red";
+        certfrom.style.color   = "red";
+        certuntil.style.color  = "red";
+    } else if (certexpire.value.match(/left/)) {
+        certexpire.style.color = "green";
+        certfrom.style.color   = "green";
+        certuntil.style.color  = "green";
+    }
+    // FQDN values
+    var currentfqdn = document.getElementById('currentfqdn');
+    var certfqdn = document.getElementById('certfqdn');
+    var domainfqdn = document.getElementById('domainfqdn');
+    certfqdn.style.color   = "black";
+    domainfqdn.style.color = "black";
+    currentfqdn.style.color = "black";
+    if ((certfqdn.value==domainfqdn.value) && (certfqdn.value==currentfqdn.value) && (!(currentfqdn.value.match(/not available/)))) {
+        currentfqdn.style.color = "green";
+        certfqdn.style.color   = "green";
+        domainfqdn.style.color  = "green";
+    } else if (certfqdn.value==domainfqdn.value) {
+        if (certfqdn.value=='not available') {
+            if (currentfqdn.value.match(/not available/)) {
+                currentfqdn.style.color = "orange";
+            }
+        } else {
+            certfqdn.style.color   = "green";
+            domainfqdn.style.color = "green";
+            if (currentfqdn.value.match(/not available/)) {
+                currentfqdn.style.color = "orange";
+            } else {
+                currentfqdn.style.color = "red";
+            }
+        }
+    }
+    certexpire.disabled = true;
+    certfrom.disabled = true;
+    certuntil.disabled = true;
+    currentfqdn.disabled = true;
+    certfqdn.disabled = true;
+    domainfqdn.disabled = true;
+    
+    document.getElementById('pkgstatus').disabled = true;
+    document.getElementById('wsstatus').disabled = true;
+    document.getElementById('lestatus').disabled = true;
+    document.getElementById('cestatus').disabled = true;
+    document.getElementById('restartorigenabled').disabled = true;
+    //document.getElementById('orighttpport').disabled = true;
+    //document.getElementById('orighttpsport').disabled = true;
+    //document.getElementById('customhttpport').disabled = true;
+    //document.getElementById('customhttpsport').disabled = true;
+    document.getElementById('currentdet').disabled = true;
+    
+    disable_group('cefiles');
+    disable_group('lefiles');
+    disable_group('wsfiles');
+    disable_group('allfiles');
+}
+function validate() {
+}
+document.onchange=function(){
+    colors();
+    var customhttpport = document.getElementById('customhttpport');
+    var customhttpsport = document.getElementById('customhttpsport');
+    if (customhttpport.value=='0')  { customhttpport.disabled=true;}
+    if (customhttpsport.value=='0') { customhttpsport.disabled=true;}
 }
 document.onsubmit=function(){
-    var input = document.getElementById('pkgstatus');
-    //if(input.value.match(/error/)) {
-        //disable();
-    //} else if (input.value.match(/success/)) {
-        //enable();
-    //}
-    document.getElementById('pkgstatus').disabled = true;
-    //document.getElementById('installbmkpackage').disabled = true;
-    document.getElementById('restartorigenabled').disabled = true;
-    document.getElementById('orighttpport').disabled = true;
-    document.getElementById('orighttpsport').disabled = true;
-    document.getElementById('customhttpport').disabled = true;
-    document.getElementById('customhttpsport').disabled = true;
-
+    colors();
 }
 </script>
