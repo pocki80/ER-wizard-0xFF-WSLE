@@ -8,7 +8,8 @@ Works on EdgeRouter and EdgeRouter X / X-SFP (system version 1.7.0+)
     <h3>0xFF-BMK-Webstatus with Let's Encrypt setup</h3>
 </div>
 <legend style="position:absolute;right:0px;padding:5px;">
-    <center>EdgeMAX Wizard "0xFF-BMK-Webstatus-LetsEncrypt"<br>created 02/2017 by CPO/BMK for FunkFeuer.at</center>
+    <center>EdgeMAX Wizard "0xFF-BMK-Webstatus-LetsEncrypt"<br>created 02/2017 by CPO/BMK for FunkFeuer.at<br>
+    Version 20170221/bmk4.2</center>
 </legend>
 <div style="padding:15px;border: 1px solid lightgray;width:648px">
   <table border="0">
@@ -105,10 +106,18 @@ Works on EdgeRouter and EdgeRouter X / X-SFP (system version 1.7.0+)
     </div>
 </fieldset>
 
+<fieldset id="bmkconfig" name="bmkconfig" class="primary expanded">
+    <legend>Configuratoin BMK-Webstatus-Page</legend>
+    <span>Interface-List:</span>         <input id="bmkinferfacelist"    name="bmkinferfacelist"    type="text" size="70" /><br>
+    <span>Traceroute-Destination:</span> <input id="bmktracerouteip"     name="bmktracerouteip"     type="text" size="30" /><br>
+    <input id="bmkadminlink"         name="bmkadminlink"         type="checkbox" /> <span>Show link to admin login page</span><br>
+    <input id="bmknodedblookup"      name="bmknodedblookup"      type="checkbox" /> <span>Load node data for name lookup and route/node count</span><br>
+</fieldset>
+
 <div style="padding:15px;border: 1px solid lightgray;width:648px">
-    <input id="installbmkpackage"    name="installbmkpackage"    type="checkbox" /><span> Install 0xFF-BMK-Webstatus-LetsEcrypt Package v4.1 on 'Apply'</span><br>
+    <input id="installbmkpackage"    name="installbmkpackage"    type="checkbox" /><span> Install 0xFF-BMK-Webstatus-LetsEcrypt Package v4.2 on 'Apply'</span><br>
     <input id="registercert"         name="registercert"         type="checkbox" /><span> Register FQDN and renew/install Certificate on 'Apply'</span><br>
-    <input id="restartorigenabled"   name="restartorigenabled"   type="checkbox" disabled /><span> Restart original lighttpd on 'Apply'</span><br>
+    <input id="restartorigenabled"   name="restartorigenabled"   type="checkbox" /><span> Restart original lighttpd on 'Apply'</span><br>
     <input id="restartcustomenabled" name="restartcustomenabled" type="checkbox" /><span> Restart custom lighttpd on 'Apply'.</span><br>
     <br>
     Wizard will raise the error "save failed" as webservices will restart and break the response session.
@@ -194,7 +203,7 @@ function colors() {
     document.getElementById('wsstatus').disabled = true;
     document.getElementById('lestatus').disabled = true;
     document.getElementById('cestatus').disabled = true;
-    document.getElementById('restartorigenabled').disabled = true;
+    //document.getElementById('restartorigenabled').disabled = true;
     //document.getElementById('orighttpport').disabled = true;
     //document.getElementById('orighttpsport').disabled = true;
     //document.getElementById('customhttpport').disabled = true;
@@ -212,8 +221,8 @@ document.onchange=function(){
     colors();
     var customhttpport = document.getElementById('customhttpport');
     var customhttpsport = document.getElementById('customhttpsport');
-    if (customhttpport.value=='0')  { customhttpport.disabled=true;}
-    if (customhttpsport.value=='0') { customhttpsport.disabled=true;}
+    if ((customhttpport.value=='0') ||(customhttpport.value==null))  { customhttpport.disabled=true;}
+    if ((customhttpsport.value=='0')||(customhttpsport.value==null)) { customhttpsport.disabled=true;}
 }
 document.onsubmit=function(){
     colors();
