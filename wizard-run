@@ -4493,14 +4493,14 @@ load () {
     ####### wizard version check against github
     # 
     olsrdwizard=""
-    for i in $(find /config/wizard/feature/ -name wizard.html | grep -i olsr); do
-        if [[ $(head $i -n 10 | grep '0xFF-WSLE') ]]; then
+    for i in $(find /config/wizard/feature/ -name wizard.html | grep -iv olsr); do
+        if [[ $(head $i -n 10 | grep '0xFF-BMK-Webstatus-LetsEncrypt') ]]; then
             olsrdwizard=$i
             break
         fi
     done
     if [ ! $olsrdwizard ]; then
-        updatetext="error: 0xFF-WSLE wizard.html not found!" >>$log 2>>$log
+        updatetext="error: 0xFF-BMK-Webstatus-LetsEncrypt wizard.html not found!" >>$log 2>>$log
     else
         CURRENTVERSION=$(head -n 8 $olsrdwizard | grep -i versioninfo= | awk -F"=" {'print $2'})
         if [ $((onlinecheck)) = 0 ]; then
@@ -4829,22 +4829,23 @@ esac
         bmksettingfile="/var/www/htdocs/cgi-bin-status.php"
     fi
     
-    head -n 20 $bmksettingfile | grep interface_1100_list | grep -oE "'.*'" | awk
-    
-    bmkinferfacelist=$(head -n 20 $bmksettingfile | grep interface_1100_list | grep -oE "'.*'" | awk -F"'" {'print $2;'})
-    bmktracerouteip=$(head -n 20 $bmksettingfile | grep traceroute_to | grep -oE "'.*'" | awk -F"'" {'print $2;'})
-    bmknodedblookupx=$(head -n 20 $bmksettingfile | grep get_nslookup_from_nodedb | grep -oE "=[0,1];" | awk {'gsub("=","",$1);gsub(";","",$1);gsub(" ","",$1); print $1;'})
-    bmkadminlinkx=$(head -n 20 $bmksettingfile | grep show_link_to_adminlogin | grep -oE "=[0,1];" | awk {'gsub("=","",$1);gsub(";","",$1);gsub(" ","",$1); print $1;'})
-    [ "$bmkinferfacelist" ] || bmkinferfacelist="n/a"
-    [ "$bmktracerouteip" ] || bmktracerouteip="n/a"
-    bmksettings=",\"bmkinferfacelist\":\"$bmkinferfacelist\",\"bmktracerouteip\":\"$bmktracerouteip\",\"bmknodedblookup\":\"$bmknodedblookup\",\"bmkadminlink\":\"$bmkadminlink\""
-    [ "$bmknodedblookupx" -eq 1 ] && bmksettings=$bmksettings",\"bmknodedblookup\":\"on\""
-    [ "$bmkadminlinkx" -eq 1 ]    && bmksettings=$bmksettings",\"bmkadminlink\":\"on\""
+    #head -n 20 $bmksettingfile | grep interface_1100_list | grep -oE "'.*'" | awk
+    if [ "$bmksettingfile" ]; then
+        bmkinferfacelist=$(head -n 20 $bmksettingfile | grep interface_1100_list | grep -oE "'.*'" | awk -F"'" {'print $2;'})
+        bmktracerouteip=$(head -n 20 $bmksettingfile | grep traceroute_to | grep -oE "'.*'" | awk -F"'" {'print $2;'})
+        bmknodedblookupx=$(head -n 20 $bmksettingfile | grep get_nslookup_from_nodedb | grep -oE "=[0,1];" | awk {'gsub("=","",$1);gsub(";","",$1);gsub(" ","",$1); print $1;'})
+        bmkadminlinkx=$(head -n 20 $bmksettingfile | grep show_link_to_adminlogin | grep -oE "=[0,1];" | awk {'gsub("=","",$1);gsub(";","",$1);gsub(" ","",$1); print $1;'})
+        [ "$bmkinferfacelist" ] || bmkinferfacelist="n/a"
+        [ "$bmktracerouteip" ] || bmktracerouteip="n/a"
+        bmksettings=",\"bmkinferfacelist\":\"$bmkinferfacelist\",\"bmktracerouteip\":\"$bmktracerouteip\",\"bmknodedblookup\":\"$bmknodedblookup\",\"bmkadminlink\":\"$bmkadminlink\""
+        [ "$bmknodedblookupx" -eq 1 ] && bmksettings=$bmksettings",\"bmknodedblookup\":\"on\""
+        [ "$bmkadminlinkx" -eq 1 ]    && bmksettings=$bmksettings",\"bmkadminlink\":\"on\""
+    fi
     ### BMK Config
     ##########
 
     # get all variables together for output
-    echo -n "{\"success\":\"1\",\"data\":{ $wslepackagestatus $lepackagestatus $wspackagestatus $cepackagestatus $allfiles $wsfiles $lefiles $cefiles"
+    echo -n "{\"success\":\"1\",\"data\":{ $wslepackagestatus $lepackagestatus $wspackagestatus $cepackagestatus $updatestatus $allfiles $wsfiles $lefiles $cefiles"
     echo -n "$ledetails $restartorigenabled $restartcustomenabled $origports $customports $bmksettings },"
     echo    " \"definition\":{ }}"
 }
@@ -4858,14 +4859,14 @@ apply () {
     if [[ "$updatefromgithub" == "on" ]]; then
         echo "update from github requested" >>$log 2>>$log
         olsrdwizard=""
-        for i in $(find /config/wizard/feature/ -name wizard.html | grep -i olsr); do
-            if [[ $(head $i -n 10 | grep '0xFF-WSLE') ]]; then
+        for i in $(find /config/wizard/feature/ -name wizard.html | grep -iv olsr); do
+            if [[ $(head $i -n 10 | grep '0xFF-BMK-Webstatus-LetsEncrypt') ]]; then
                 olsrdwizard=$i
                 break
             fi
         done
         if [ ! $olsrdwizard ]; then
-            echo "error: 0xFF-WSLE wizard.html not found!" >>$log 2>>$log
+            echo "error: 0xFF-BMK-Webstatus-LetsEncrypt wizard.html not found!" >>$log 2>>$log
         elif [ $((onlinecheck)) != 0 ]; then
             echo "currently offline" >>$log 2>>$log
         else
@@ -5260,5 +5261,3 @@ case "$ACTION" in
 esac
 
 echo "EdgeMAX 0xFF-BMK-Webstatus-LetsEncrypt Wizard ended $(date +%H:%M:%S.%N)" >> $log
-
-0
