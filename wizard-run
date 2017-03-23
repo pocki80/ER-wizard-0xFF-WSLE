@@ -4604,7 +4604,7 @@ case $wsstatus in
         wsfiles=$wsfiles',{"name":"[d] /config/custom/www/js/","status":"'$tmp'"}'
         ;;
     4)
-        wspackagestatus=',"wsstatus":"dpkg version "$bmkdpkgversion" ('$wsstatus')"'
+        wspackagestatus=',"wsstatus":"dpkg version '$bmkdpkgversion' ('$wsstatus')"'
 esac
     wsfiles=$wsfiles']'
 
