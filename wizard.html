@@ -2,6 +2,8 @@
 
 EdgeMAX Wizard "0xFF-BMK-Webstatus-LetsEncrypt" created 02/2017 by CPO/BMK for FunkFeuer.at
 Works on EdgeRouter and EdgeRouter X / X-SFP (system version 1.7.0+)
+versioninfo=201703230
+^-- use version identifier as number: YYYYMMDDX whereas X can be intraday-version
 
 -->
 <div class="instructions">
@@ -9,7 +11,7 @@ Works on EdgeRouter and EdgeRouter X / X-SFP (system version 1.7.0+)
 </div>
 <legend style="position:absolute;right:0px;padding:5px;">
     <center>EdgeMAX Wizard "0xFF-BMK-Webstatus-LetsEncrypt"<br>created 02/2017 by CPO/BMK for FunkFeuer.at<br>
-    Version 20170317/bmk4.3</center>
+    Version 20170322/bmk4.4</center>
 </legend>
 <div style="padding:15px;border: 1px solid lightgray;width:648px">
   <table border="0">
@@ -115,7 +117,8 @@ Works on EdgeRouter and EdgeRouter X / X-SFP (system version 1.7.0+)
 </fieldset>
 
 <div style="padding:15px;border: 1px solid lightgray;width:648px">
-    <input id="installbmkpackage"    name="installbmkpackage"    type="checkbox" /><span> Install 0xFF-BMK-Webstatus-LetsEncrypt Package v4.3 on 'Apply'</span><br>
+    <input id="updatefromgithub"     name="updatefromgithub"     type="checkbox" /><span> Upgrade Wizard from GitHub (online only) on 'Apply'</span><br>
+    <input id="installbmkpackage"    name="installbmkpackage"    type="checkbox" /><span> Install 0xFF-BMK-Webstatus-LetsEncrypt Package v4.4 on 'Apply'</span><br>
     <input id="registercert"         name="registercert"         type="checkbox" /><span> Register FQDN and renew/install Certificate on 'Apply'</span><br>
     <input id="restartorigenabled"   name="restartorigenabled"   type="checkbox" /><span> Restart original lighttpd on 'Apply'</span><br>
     <input id="restartcustomenabled" name="restartcustomenabled" type="checkbox" /><span> Restart custom lighttpd on 'Apply'.</span><br>
@@ -133,7 +136,7 @@ function disable_group(group) {
                 nodes[i].style.color = "red";
             } else if (nodes[i].value.match(/old|link|missing/)) {
                 nodes[i].style.color = "orange";
-            } else if (nodes[i].value.match(/ok/)) {
+            } else if (nodes[i].value.match(/ok|generate/)) {
                 nodes[i].style.color = "green";
             }
         }
@@ -150,6 +153,18 @@ function colors() {
         input.style.color = "green";
         //enable();
     }
+    var input = document.getElementById('updatestatus');
+    input.style.color = "black";
+    document.getElementById('updatefromgithub').disabled = true;
+    if (input.value.match(/new version available/)) {
+        document.getElementById('updatefromgithub').disabled = false;
+        input.style.color = "red";
+        //disable();
+    } else if (input.value.match(/up-to-date/)) {
+        input.style.color = "green";
+        //enable();
+    } 
+    document.getElementById('updatestatus').disabled = true;
     // cert expiary colors
     var certexpire = document.getElementById('certexpire');
     var certfrom = document.getElementById('certfrom');
