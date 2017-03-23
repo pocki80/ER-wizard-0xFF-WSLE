@@ -4546,9 +4546,14 @@ load () {
     # - 2 new version: /config/custom/www/cgi-bin-status.php
     # - 3 old and new exists
 
-    [ -f "/var/www/htdocs/cgi-bin-status.php" ]    && wsstatus=1 || wsstatus=0
-    if [ -f "/config/custom/www/cgi-bin-status.php" ]; then
-        [ -f "/config/custom/bin/ip2dns" ] && wsstatus=3 || wsstatus=2
+    bmkdpkgversion=$(dpkg -s 0xff-bmk-webstatus | grep -i version: | awk {'print $2'})
+    if [ "$bmkdpkgversion" ]; then
+        wsstatus=4
+    else
+        [ -f "/var/www/htdocs/cgi-bin-status.php" ]    && wsstatus=1 || wsstatus=0
+        if [ -f "/config/custom/www/cgi-bin-status.php" ]; then
+            [ -f "/config/custom/bin/ip2dns" ] && wsstatus=3 || wsstatus=2
+        fi
     fi
 
     wsfiles=',"wsfiles":['
@@ -4581,6 +4586,8 @@ case $wsstatus in
         [ -d "/config/custom/www/js" ] && tmp="ok" || tmp="err"
         wsfiles=$wsfiles',{"name":"[d] /config/custom/www/js/","status":"'$tmp'"}'
         ;;
+    4)
+        wspackagestatus=',"wsstatus":"dpkg version "$bmkdpkgversion" ('$wsstatus')"'
 esac
     wsfiles=$wsfiles']'
 
