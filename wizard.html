@@ -2,7 +2,7 @@
 
 EdgeMAX Wizard "0xFF-BMK-Webstatus-LetsEncrypt" created 02/2017 by CPO/BMK for FunkFeuer.at
 Works on EdgeRouter and EdgeRouter X / X-SFP (system version 1.7.0+)
-versioninfo=201703231
+versioninfo=201703232
 ^-- use version identifier as number: YYYYMMDDX whereas X can be intraday-version
 
 -->
@@ -32,9 +32,9 @@ versioninfo=201703231
        Change ports with care!<br>
        Lets-Encrypt registration and renewal needs custom-server http-port to be 80.<br>
        WebGui breaks on changing orig-server https-port** OR on restarting orig-server**<br>
-       Installing BMK-Webpackage will migrate original webserver to ports 81/8443 to install custom webserver on ports 80/443.**<br>
-       <br>
+       Installing BMK-Webpackage will migrate original webserver ports to 81/8443 if set to 80/443. https-port can swapped after install.**<br>
        ** this will result in the error message "apply failed"<br>
+       &nbsp;<br>
     </td></tr>
     <tr><td style="vertical-align:middle">Current DNS</td><td><input style="right:10px" id="currentfqdn" name="currentfqdn" type="text" size="40" disabled /><input style="right:10px" id="currentdet" name="currentdet" type="text" size="15" disabled /></td></tr>
     <tr><td style="vertical-align:middle">Domain-Key FQDN</td><td><input style="right:10px" id="domainfqdn" name="domainfqdn" type="text" size="40" disabled /></td></tr>
