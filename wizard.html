@@ -2,7 +2,7 @@
 
 EdgeMAX Wizard "0xFF-BMK-Webstatus-LetsEncrypt" created 02/2017 by CPO/BMK for FunkFeuer.at
 Works on EdgeRouter and EdgeRouter X / X-SFP (system version 1.7.0+)
-versioninfo=201703232
+versioninfo=201703270
 ^-- use version identifier as number: YYYYMMDDX whereas X can be intraday-version
 
 -->
@@ -11,7 +11,7 @@ versioninfo=201703232
 </div>
 <legend style="position:absolute;right:0px;padding:5px;">
     <center>EdgeMAX Wizard "0xFF-BMK-Webstatus-LetsEncrypt"<br>created 02/2017 by CPO/BMK for FunkFeuer.at<br>
-    Version 20170322/bmk4.4</center>
+    Version 20170327/bmk4.5</center>
 </legend>
 <div style="padding:15px;border: 1px solid lightgray;width:648px">
   <table border="0">
@@ -29,11 +29,7 @@ versioninfo=201703232
        <input style="right:10px" id="customhttpsport" name="customhttpsport" type="number" size="6" /> (Cert-Check!!)
     </td></tr>
     <tr><td style="vertical-align:middle" colspan=2>
-       Change ports with care!<br>
-       Lets-Encrypt registration and renewal needs custom-server http-port to be 80.<br>
-       WebGui breaks on changing orig-server https-port** OR on restarting orig-server**<br>
-       Installing BMK-Webpackage will migrate original webserver ports to 81/8443 if set to 80/443. https-port can swapped after install.**<br>
-       ** this will result in the error message "apply failed"<br>
+       Several changes are applied with restarting the lighttpd. This will result in the error message "apply failed". <b>Reload the full WebUI after this!</b><br>
        &nbsp;<br>
     </td></tr>
     <tr><td style="vertical-align:middle">Current DNS</td><td><input style="right:10px" id="currentfqdn" name="currentfqdn" type="text" size="40" disabled /><input style="right:10px" id="currentdet" name="currentdet" type="text" size="15" disabled /></td></tr>
@@ -119,7 +115,6 @@ versioninfo=201703232
 
 <div style="padding:15px;border: 1px solid lightgray;width:648px">
     <input id="updatefromgithub"     name="updatefromgithub"     type="checkbox" /><span> Upgrade Wizard from GitHub (online only) on 'Apply'</span><br>
-    <input id="installbmkpackage"    name="installbmkpackage"    type="checkbox" /><span> Install 0xFF-BMK-Webstatus-LetsEncrypt Package v4.4 on 'Apply'</span><br>
     <input id="registercert"         name="registercert"         type="checkbox" /><span> Register FQDN and renew/install Certificate on 'Apply'</span><br>
     <input id="restartorigenabled"   name="restartorigenabled"   type="checkbox" /><span> Restart original lighttpd on 'Apply'</span><br>
     <input id="restartcustomenabled" name="restartcustomenabled" type="checkbox" /><span> Restart custom lighttpd on 'Apply'.</span><br>
