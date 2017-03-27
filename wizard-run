@@ -68,6 +68,8 @@ echo "Installation started $(date +%H:%M:%S.%N)" >>$log
 [ -f "/config/user-data/0xff-bmk-webstatus_4.2_mipsel.deb" ] && rm -f /config/user-data/0xff-bmk-webstatus_4.2_mipsel.deb
 [ -f "/config/user-data/0xff-bmk-webstatus_4.3_mipsel.deb" ] && rm -f /config/user-data/0xff-bmk-webstatus_4.3_mipsel.deb
 [ -f "/config/user-data/0xff-bmk-webstatus_4.4_mipsel.deb" ] && rm -f /config/user-data/0xff-bmk-webstatus_4.4_mipsel.deb
+[ -f "/config/user-data/0xff-bmk-webstatus_4.5_mipsel.deb" ] && rm -f /config/user-data/0xff-bmk-webstatus_4.5_mipsel.deb
+# future versions were saved to /tmp/ and removed automativally after wizard install
 
 # bmk-package
 echo "ITxhcmNoPgpkZWJpYW4tYmluYXJ5ICAgMTQ5MDYxNjk4NCAgMCAgICAgMCAgICAgMTAwNjQ0ICA0
@@ -4265,7 +4267,7 @@ fG8hvlpexBm+LZWKLr6YuK4IG6hy2N2a86+qInzAiRIh3Xt123Gz6uukAWUalZriFtsNwMT2l4S+
 /JSAui2sgaxRromEVqrAmCaE/OpQ1uehaLbEsUTJ3F7zVvBw6t416GaD53BTNDmKdEYIrCJVZMf0
 FEwcpP7egDRv9i10wZ2wCi9srj/8qRxn9krSdBok6WAIRF3bHNJe2oVsaaVxu5RqTI59cMMGGWWl
 2O0G4AAAAADjmknOYFZ54wAB7asOgLA2lCXtRLHEZ/sCAAAAAARZWg==
-" | base64 -d > /tmp""$filename
+" | base64 -d > /tmp/$filename
 if [[ $? == 0 ]]; then 
     echo "extracted package file: "$filename" without error" >> $log
 else
@@ -4273,13 +4275,13 @@ else
 fi
 
 echo "Start Package-Install..." >> $log
-if [ -f /tmp""$filename ]; then
+if [ -f /tmp/$filename ]; then
     echo "Execute package..." >> $log
-    sudo dpkg -i /tmp""$filename >> $log
+    sudo dpkg -i /tmp/$filename >> $log
     echo "...wizard install-procedure finished" >> $log
 fi
 
-rm -f /tmp""$filename >> $log
+rm -f /tmp/$filename >> $log
 
 # base64 builds/0xff-bmk-webstatus_4.2_mipsel.deb >0xff-bmk-webstatus_4.2_mipsel.deb.base64
 
