@@ -2,13 +2,12 @@
 BMK-Webstatus-LetsEncrypt Wizard for Ubiquiti EdgeMAX Devices supporting Wizards 
 
 Installs and manages the Web-Status-Packages with LetsEncrypt-Setup from this git:
-+ https://github.com/dabeani/0xFF-BMK-webstatus as of version v4.4
++ https://github.com/dabeani/0xFF-BMK-webstatus as of version v4.5
 
 what it does:
-- on installation of wizard, downloads/extracts BMK-Webstatus-LE package to user-data
+- on installation of wizard, installs BMK-Webstatus-LE package
 - shows webserver port settings and status of certificates, package installations
 - shows certificate validity/expiary and FQDN for domain.csr and signed.crt
-- trigger BMK-Webstatus Package-Install on apply() -> won't register FQDN certificate
 - trigger FQDN certificate register and/or renewal on apply()
 - change webserver ports, use with care as webgui-session will most likely break
 - restart webserices on apply()
