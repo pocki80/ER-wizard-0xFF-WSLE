@@ -4897,6 +4897,11 @@ esac
     if [ -f /config/letsencrypt/deploysetting.dat ] && [ "$(grep -i "deploycertificate=yes" /config/letsencrypt/deploysetting.dat |wc -l)" == "1" ]; then
         deployactive=',"deployactive":"on"'
     fi
+    if [ -f /config/letsencrypt/id_rsa.pub ]; then
+        routerrsakey=$(cat /config/letsencrypt/id_rsa.pub)
+        routername=$(hostname)
+        deployactive=$deployactive',"routerrsakey":"'$routerrsakey'$","routername":"'$routername'$"'
+    fi
 
     # get all variables together for output
     echo -n "{\"success\":\"1\",\"data\":{ $wslepackagestatus $lepackagestatus $wspackagestatus $cepackagestatus $updatestatus $allfiles $wsfiles $lefiles $cefiles"

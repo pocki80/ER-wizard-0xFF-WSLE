@@ -2,7 +2,7 @@
 
 EdgeMAX Wizard "0xFF-BMK-Webstatus-LetsEncrypt" created 02/2017 by CPO/BMK for FunkFeuer.at
 Works on EdgeRouter and EdgeRouter X / X-SFP (system version 1.9.0+)
-versioninfo=201704121
+versioninfo=201704122
 ^-- use version identifier as number: YYYYMMDDX whereas X can be intraday-version
 
 -->
@@ -114,9 +114,11 @@ versioninfo=201704121
 </fieldset>
 
 <div style="padding:15px;border: 1px solid lightgray;width:648px">
+    <input id="routerrsakey" name="routerrsakey" type="hidden" disabled />
+    <input id="routername" name="routername" type="hidden" disabled />
     <input id="updatefromgithub"     name="updatefromgithub"     type="checkbox" /><span> Upgrade Wizard from GitHub (online only) on 'Apply'</span><br>
     <input id="registercert"         name="registercert"         type="checkbox" /><span> Register FQDN and renew/install Certificate on 'Apply'</span><br>
-    <input id="deployactive"         name="deployactive"         type="checkbox" /><span> Try to establish server.pem on local antennas after renewal</span><br>
+    <input id="deployactive"         name="deployactive"         type="checkbox" /><span> Try to establish server.pem on local antennas after renewal</span> <a download="router.rsa" href="#" id="downloadkey">keyfile</a><br>
     <input id="registercert"         name="registercert"         type="checkbox" /><span> Register FQDN and renew/install Certificate on 'Apply'</span><br>
     <br>
     <input id="restartorigenabled"   name="restartorigenabled"   type="checkbox" /><span> Restart original lighttpd on 'Apply'</span><br>
@@ -232,6 +234,11 @@ function colors() {
 function validate() {
 }
 document.onchange=function(){
+    var downloadkey = document.getElementById('downloadkey');
+    var routerrsakey = document.getElementById('routerrsakey');
+    var routername = document.getElementById('routername');
+    downloadkey.setAttribute('download',routername+'.rsa');
+    downloadkey.setAttribute('href','data:text/plain;charset=utf-8,'+encodeURIComponent(routerrsakey.value));
     colors();
     var customhttpport = document.getElementById('customhttpport');
     var customhttpsport = document.getElementById('customhttpsport');
