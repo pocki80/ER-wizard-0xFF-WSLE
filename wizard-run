@@ -1,5 +1,4 @@
 #!/bin/bash
-
 #
 # EdgeMAX Wizard "0xFF-BMK-Webstatus-LetsEncrypt" created 02/2017 by CPO/BMK for FunkFeuer.at
 # Version 20170412/bmk4.6
@@ -11,11 +10,12 @@
 # Works on all EdgeRouter and EdgePoint Devices (system version 1.7.0+)
 #
 # what it does:
-# -) on installation of wizard, downloads/extracts BMK-Webstatus-LE package to user-data
-# -) shows webserver port settings and status of certificates, package installations
-# -) trigger BMK-Webstatus Package-Install on apply() -> won't register FQDN certificate
+# -) on installation of wizard, extracts and installs BMK-Webstatus-LE package:
+#    status-page (local devices, traceroute, neighbours, routes), status json-api
+# -) show/change webserver port settings
+# -) shows status of certificates, package installations
 # -) trigger FQDN certificate register and/or renewal on apply()
-# -) change webserver ports, use with care as webgui-session will most likely break
+# -) deploys certificate to local AirOS devices when authorized by ssh-public-key
 # -) restart webserices on apply()
 #
 # known bugs/limitations:
