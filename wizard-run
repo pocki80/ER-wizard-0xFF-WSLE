@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 # EdgeMAX Wizard "0xFF-BMK-Webstatus-LetsEncrypt" created 02/2017 by CPO/BMK for FunkFeuer.at
-# Version 20170412/bmk4.6
+# Version 20170413/bmk4.6
 # ^-- previous line is used frombmk-webstatus-package as version identification, dont remove "Version "
 # Shortform: 0xffwsle 0xFF-WSLE
 #
