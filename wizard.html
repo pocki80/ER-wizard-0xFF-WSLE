@@ -1,160 +1,208 @@
 <!--
 
-EdgeMAX Wizard "0xFF-BMK-Webstatus-LetsEncrypt" created 02/2017 by CPO/BMK for FunkFeuer.at
-Works on EdgeRouter and EdgeRouter X / X-SFP (system version 1.9.0+)
-versioninfo=201704133
+EdgeMAX Wizard "OLSRd_V1" created 03/2016 by Onetrix.net for FunkFeuer.at
+Works on EdgeRouter and EdgeRouter X / X-SFP (system version 1.7.0+)
+versioninfo=201703220
 ^-- use version identifier as number: YYYYMMDDX whereas X can be intraday-version
 
 -->
 <div class="instructions">
-    <h3>0xFF-BMK-Webstatus with Let's Encrypt setup</h3>
+    <h3>Optimized Link State Routing Protocol</h3>
+    <div>The <a href="http://olsr.org" target="_blank">OLSR.org</a> OLSR Daemon (olsrd) is an implementation of the IETF <a href="http://tools.ietf.org/html/rfc3626" target="_blank">RFC 3626: Optimized Link State Routing Protocol</a>.</div>
+    <div>OLSR is an IP routing protocol optimized for mobile ad hoc networks, which can also be used on other wireless ad hoc networks. As such it allows mesh routing for any network equipment.</div>
 </div>
 <legend style="position:absolute;right:0px;padding:5px;">
-    <center>EdgeMAX Wizard "0xFF-BMK-Webstatus-LetsEncrypt"<br>created 02/2017 by CPO/BMK for FunkFeuer.at<br>
-    Version 20170413/bmk4.6</center>
+    <center>EdgeMAX Wizard "OLSRd_V1" created 2016<br>by <a href="http://onetrix.net" target="_blank">Onetrix.net</a> for <a href="http://funkfeuer.at" target="_blank">FunkFeuer.at</a>
+    <br>Version [cpo0903f/20170322]</center>
 </legend>
 <div style="padding:15px;border: 1px solid lightgray;width:648px">
   <table border="0">
-    <tr><td style="vertical-align:middle">Package Status:</td><td><input style="right:10px" id="pkgstatus" name="pkgstatus" type="text" size="60" disabled /></td></tr>
-    <tr><td style="vertical-align:middle">Update Info:</td>   <td><input style="right:10px" id="updatestatus" name="updatestatus" type="text" size="60" disabled /></td></tr>
-    <tr><td style="vertical-align:middle">BMK-webstatus:</td> <td><input style="right:10px" id="wsstatus" name="wsstatus" type="text" size="60" disabled /></td></tr>
-    <tr><td style="vertical-align:middle">Let's Encrypt:</td> <td><input style="right:10px" id="lestatus" name="lestatus" type="text" size="60" disabled /></td></tr>
-    <tr><td style="vertical-align:middle">Certificates:</td>  <td><input style="right:10px" id="cestatus" name="cestatus" type="text" size="60" disabled /></td></tr>
-    <tr><td style="vertical-align:middle">Orig-Server-Ports:</td><td>
-       <input style="right:10px" id="orighttpport"  name="orighttpport"  type="number" size="6" />
-       <input style="right:10px" id="orighttpsport" name="orighttpsport" type="number" size="6" /> (WebGUI!!)
-    </td></tr>
-    <tr><td style="vertical-align:middle">Custom-Server-Ports:</td><td>
-       <input style="right:10px" id="customhttpport"  name="customhttpport"  type="number" size="6" /> 
-       <input style="right:10px" id="customhttpsport" name="customhttpsport" type="number" size="6" /> (Cert-Check!!)
-    </td></tr>
-    <tr><td style="vertical-align:middle" colspan=2>
-       Several changes are applied with restarting the lighttpd. This will result in the error message "apply failed". <b>Reload the full WebUI after this!</b><br>
-       &nbsp;<br>
-    </td></tr>
-    <tr><td style="vertical-align:middle">Current DNS</td><td><input style="right:10px" id="currentfqdn" name="currentfqdn" type="text" size="40" disabled /><input style="right:10px" id="currentdet" name="currentdet" type="text" size="15" disabled /></td></tr>
-    <tr><td style="vertical-align:middle">Domain-Key FQDN</td><td><input style="right:10px" id="domainfqdn" name="domainfqdn" type="text" size="40" disabled /></td></tr>
-    <tr><td style="vertical-align:middle">Certificate FQDN</td><td><input style="right:10px" id="certfqdn" name="certfqdn" type="text" size="40" disabled /> </td></tr>
-    <tr><td style="vertical-align:middle">Certificate Validity</td><td>
-                                          <input style="right:10px" id="certfrom" name="certfrom" type="text" size="20" disabled /> 
-                                       to <input style="right:10px" id="certuntil" name="certuntil" type="text" size="20" disabled /> 
-                                          <input style="right:10px" id="certexpire" name="certexpire" type="text" size="15" disabled /> </td></tr>
+    <tr><td style="vertical-align:middle">Package Status:</td><td><input style="right:10px" id="pkgstatus" name="pkgstatus" type="text" size="80" disabled /></td></tr>
+    <tr><td style="vertical-align:middle">Daemon Status:</td><td><input style="right:10px" id="daemonstatus" name="daemonstatus" type="text" size="80" disabled /></td></tr>
+    <tr><td style="vertical-align:middle">Update Info:</td><td><input style="right:10px" id="updatestatus" name="updatestatus" type="text" size="80" disabled /></td></tr>
+    <tr><td colspan="2"><div><span><input id="olsrdsetupscript" name="olsrdsetupscript" type="checkbox" />&nbsp;</span></div><div><span class="text" data-infotip='When updating the Firmware, OLSR package gets lost (only data from /config/ directory will be copied over to newly installed system). Enable this Setup-Script to install and setup OLSRd with your current running-configuration after a Firmware upgrade. WARNING: DO NOT remove OLSRd Wizard if Setup-Script is enabled because it uses functions from this Wizard for setup.'>Setup Script</span></div></td></tr>
+    <tr><td colspan="2"><div><span><input id="updatefromgithub" name="updatefromgithub" type="checkbox" />&nbsp;</span></div><div><span class="text" data-infotip='When checken, the wizard will download and install the current version from github. During this process, olsr daemons will update and restart as well - this will interupt current connections for a couple of seconds. You need to refresh the EdgeRouter WebUI afterwards, as the browser session will need a restart.'>Upgrade Wizard on 'Apply'.</span></div></td></tr>
   </table>
 </div>
-
-<fieldset id="cefiles" name="cefiles" class="primary expanded">
-    <legend>Let's Encrypt files</legend>
-    <div class="addable" data-min="0" data-max="10" data-object="cefiles" data-objectify="1">
+<fieldset id="ipv4olsrd" name="ipv4olsrd" class="primary expanded">
+    <!-- issue: image-position; chrome and firefox count top-pixels from parent element differently; should be top:10px; -->
+    <div title="Optimized Link State Routing Daemon" style="position:absolute; top:10px; left:125px; width:560px; height:120px; z-index:0; padding:10px; background-image:url(http://www.olsr.org/files/olsr_logo.jpg); background-repeat:no-repeat;opacity:0.5;filter:alpha(opacity=5);"></div>
+    <legend>OLSRd IPv4</legend>
+    <div class="addable" data-min="1" data-max="1" data-object="olsrd4config" data-objectify="1">
+        <div><span><input name="olsrd4enabled" type="checkbox" /></span> Enable OLSR daemon</div>
+        <div class="clear"></div><br><div class="clear"></div>
+        <div><span><input name="olsrd4runonboot" type="checkbox" /></span> Run OLSR daemon<br>(on boot, if enabled)</div>
+        <div class="clear"></div><br><div class="clear"></div>
+        <span><b><u>Interfaces:</u></b></span>
         <div class="addable-template" style="padding-top:0px;">
             <div class="multi">
-                <div>File      <input id="name" name="name" size="50" disabled /></div>
-                <div>Status    <input name="status" size="10" disabled /></div>
+                <div>Enable: <input name="enabled" type="checkbox" onclick="validate()" /></div>
+                <div>Interface: <input id="olsrd4intf" name="olsrd4interface" size="5" disabled /></div>
+                <div>Address: <input name="ipv4address" size="25" disabled /></div>
+                <div id="olsrd4mainip"></div>
             </div>
         </div>
         <div class="addable-container"></div>
         <!-- although hidden, this add-button needs to exist! //-->
         <button type="button" class="addable-add" style="position:absolute;right:0px;opacity:0.0;filter:alpha(opacity=0);" disabled></button>
+        <span><b><u>Settings:</u></b></span>
+        <div class="clear"></div><br><div class="clear"></div>
+        <div><input type="text" name="olsrd4Ip4Broadcast" size="70" /></div><div><span class="text" data-infotip='Forces the given IPv4 broadcast address to be used as destination address for all outgoing OLSR traffic on the interface. In reality only the address 255.255.255.255 makes sense to set here. If this option is not set the broadcast address that the interface is configured with will be used. This address will also be updated in run-time if a change is detected.'>Ip4Broadcast</span></div>
+        <div class="clear"></div>
+        <div><input type="text" name="olsrd4Hna" size="70" /></div><div><span class="text" data-infotip='IPv4 Host and Network Association messages allow hosts to announce themselves as gateways to external networks. Examples: 78.41.118.9 255.255.255.255; 78.41.112.214 255.255.255.255'>Hna4</span></div>
+        <div class="clear"></div>
+        <div><input type="text" name="olsrd4LinkQualityMult" size="70" /></div><div><span class="text" data-infotip='Multiply routes with the factor given here. Allowed values are between 0.01 and 1.0. It is only used when LQ-Level is greater than 0. Examples: 193.238.156.229 0.5; 78.41.112.123 0.7'>LinkQualityMult (IPv4)</span></div>
+        <div class="clear"></div>
+        <span><b><u>Plugins:</u></b></span>
+        <div class="clear"></div>
+        <div><span><input name="olsrd4plgtxtinfo" type="checkbox" /></span></div><div><span class="text">txtinfo (0.0.0.0:2006)</span></div>
+        <div><span><input name="olsrd4plgjsoninfo" type="checkbox" /></span></div><div><span class="text">jsoninfo (0.0.0.0:9090)</span></div>
+        <div><span><input name="olsrd4plghttpinfo" type="checkbox" /></span></div><div><span class="text">httpinfo (0.0.0.0:8080)</span></div>
     </div>
 </fieldset>
-
-<fieldset id="wsfiles" name="wsfiles" class="primary closed">
-    <legend>BMK-WebStatus php files</legend>
-    <div class="addable" data-min="0" data-max="99" data-object="wsfiles" data-objectify="1">
-        <span><b><u>Files checked</u></b></span>
+<fieldset id="ipv6olsrd" name="ipv6olsrd" class="primary expanded">
+    <!-- issue: image-position; chrome and firefox count top-pixels from parent element differently; should be top:10px; -->
+    <div title="Optimized Link State Routing Daemon" style="position:absolute; top:10px; left:125px; width:560px; height:120px; z-index:0; padding:10px; background-image:url(http://www.olsr.org/files/olsr_logo.jpg); background-repeat:no-repeat;opacity:0.5;filter:alpha(opacity=5);"></div>
+    <legend>OLSRd IPv6</legend>
+    <div class="addable" data-min="1" data-max="1" data-object="olsrd6config" data-objectify="1">
+        <div><span><input name="olsrd6enabled" type="checkbox" /></span> Enable OLSR daemon</div>
+        <div class="clear"></div><br><div class="clear"></div>
+        <div><span><input name="olsrd6runonboot" type="checkbox" /></span> Run OLSR daemon<br>(on boot, if enabled)</div>
+        <div class="clear"></div><br><div class="clear"></div>
+        <span><b><u>Interfaces:</u></b></span>
         <div class="addable-template" style="padding-top:0px;">
             <div class="multi">
-                <div>File-Name <input id="name" name="name" size="50" disabled /></div>
-                <div>Status    <input name="status" size="10" disabled /></div>
+                <div>Enable: <input name="enabled" type="checkbox" onclick="validate()" /></div>
+                <div>Interface: <input id="olsrd6intf" name="olsrd6interface" size="5" disabled /></div>
+                <div>Address: <input name="ipv6address" size="25" disabled /></div>
+                <div id="olsrd6mainip"></div>
             </div>
         </div>
         <div class="addable-container"></div>
         <!-- although hidden, this add-button needs to exist! //-->
         <button type="button" class="addable-add" style="position:absolute;right:0px;opacity:0.0;filter:alpha(opacity=0);" disabled></button>
+        <span><b><u>Settings:</u></b></span>
+        <div class="clear"></div><br><div class="clear"></div>
+        <!-- issue: setting ip6 multicast does not work with olsrd 0.6.6.2 - daemon hangs while starting
+        <div><input type="text" name="olsrd6Ip6MulticastSite" size="70" /></div><div><span class="text" data-infotip='IPv6 multicast address to use when using site-local addresses. If not defined, ff05::15 is used'>Ip6MulticastSite</span></div>
+        <div class="clear"></div>
+        <div><input type="text" name="olsrd6Ip6MulticastGlobal" size="70" /></div><div><span class="text" data-infotip='IPv6 multicast address to use when using global addresses. If not defined, ff0e::1 is used'>Ip6MulticastGlobal</span></div>
+        <div class="clear"></div>
+        -->
+        <div><input type="text" name="olsrd6Hna" size="70" /></div><div><span class="text" data-infotip='IPv6 Host and Network Association messages allow hosts to announce themselves as gateways to external networks. Examples: 2a02:60:100:a907::2/64; 2a02:60:100:a905::254/64'>Hna6</span></div>
+        <div class="clear"></div>
+        <div><input type="text" name="olsrd6LinkQualityMult" size="70" /></div><div><span class="text" data-infotip='Multiply routes with the factor given here. Allowed values are between 0.01 and 1.0. It is only used when LQ-Level is greater than 0. Examples: 2a02:60:100:c00::7 0.3; 2a02:60:100:c00::8 0.3'>LinkQualityMult (IPv6)</span></div>
+        <div class="clear"></div>
+        <span><b><u>Plugins:</u></b></span>
+        <div class="clear"></div>
+        <!-- <div><span><input name="olsrd6plghttpinfo" type="checkbox" /></span></div><div><span class="text">httpinfo</span></div> -->
+        <div><span><input name="olsrd6plgtxtinfo" type="checkbox" /></span></div><div><span class="text">txtinfo ([::]:2007)</span></div>
+        <div><span><input name="olsrd6plgjsoninfo" type="checkbox" /></span></div><div><span class="text">jsoninfo ([::]:9091)</span></div>
+        <div><span><input name="olsrd6plghttpinfo" type="checkbox" /></span></div><div><span class="text">httpinfo ([::]:8081)</span></div>
     </div>
 </fieldset>
-
-<fieldset id="lefiles" name="lefiles" class="primary closed">
-    <legend>Let's Encrypt files</legend>
-    <div class="addable" data-min="0" data-max="99" data-object="lefiles" data-objectify="1">
-        <span><b><u>Files checked</u></b></span>
-        <div class="addable-template" style="padding-top:0px;">
+<fieldset id="olsrdsettings" name="olsrdgeneralconf" class="primary expanded">
+    <div title="Optimized Link State Routing Protocol" style="position:absolute; top:10px; right:0px; z-index:-1; padding:10px;">
+        <img src="http://olsrinterop.free.fr/pictures/logo1.png" width="365px" height="210px" style="opacity:0.1; filter:alpha(opacity=1);">
+    </div>
+    <legend>Common OLSR Settings</legend>
+    <span><b><u>Emission intervals:</u></b> (for both IPv4 &amp; IPv6 daemons)<br>If not defined, RFC proposed values will be used in most cases.</span><br>
+    <div class="addable" data-min="1" data-max="1" data-object="olsrdsettings" data-objectify="1">
+        <div class="addable-template">
             <div class="multi">
-                <div>File-Name <input id="name" name="name" size="50" disabled /></div>
-                <div>Status    <input name="status" size="10" disabled /></div>
+                <div><input type="text" name="HelloInterval" value="5.0" /></div><div><span class="text" data-infotip='Hello interval in seconds(float)'>HelloInterval</span></div>
+                <div class="clear"></div><br><div class="clear"></div><div class="clear"></div><br><div class="clear"></div>
+                <div><input type="text" name="HelloValidityTime" value="125.0" /></div><div><span class="text" data-infotip='HELLO validity time'>HelloValidityTime</span></div>
+                <div class="clear"></div><br><div class="clear"></div><div class="clear"></div><br><div class="clear"></div>
+                <div><input type="text" name="TcInterval" value="2.0" /></div><div><span class="text" data-infotip='TC interval in seconds(float)'>TcInterval</span></div>
+                <div class="clear"></div><br><div class="clear"></div><div class="clear"></div><br><div class="clear"></div>
+                <div><input type="text" name="TcValidityTime" value="500.0" /></div><div><span class="text" data-infotip='TC validity time'>TcValidityTime</span></div>
+                <div class="clear"></div><br><div class="clear"></div><div class="clear"></div><br><div class="clear"></div>
+                <div><input type="text" name="MidInterval" value="25.0" /></div><div><span class="text" data-infotip='MID interval in seconds(float)'>MidInterval</span></div>
+                <div class="clear"></div><br><div class="clear"></div><div class="clear"></div><br><div class="clear"></div>
+                <div><input type="text" name="MidValidityTime" value="500.0" /></div><div><span class="text" data-infotip='MID validity time'>MidValidityTime</span></div>
+                <div class="clear"></div><br><div class="clear"></div><div class="clear"></div><br><div class="clear"></div>
+                <div><input type="text" name="HnaInterval" value="25.0" /></div><div><span class="text" data-infotip='HNA interval in seconds(float)'>HnaInterval</span></div>
+                <div class="clear"></div><br><div class="clear"></div><div class="clear"></div><br><div class="clear"></div>
+                <div><input type="text" name="HnaValidityTime" value="500.0" /></div><div><span class="text" data-infotip='HNA validity time'>HnaValidityTime</span></div>
             </div>
         </div>
         <div class="addable-container"></div>
-        <!-- although hidden, this add-button needs to exist! //-->
+        <!-- although hidden, this add-button needs to exist //-->
         <button type="button" class="addable-add" style="position:absolute;right:0px;opacity:0.0;filter:alpha(opacity=0);" disabled></button>
     </div>
 </fieldset>
-
-<fieldset id="allfiles" name="allfiles" class="primary closed">
-    <legend>File-Liste overall</legend>
-    <div class="addable" data-min="0" data-max="99" data-object="allfiles" data-objectify="1">
-        <span><b><u>Files found</u></b></span>
-        <div class="addable-template" style="padding-top:0px;">
-            <div class="multi">
-                <div>File-Name <input id="name" name="name" size="50" disabled /></div>
-                <div>Status    <input name="status" size="10" disabled /></div>
-            </div>
-        </div>
-        <div class="addable-container"></div>
-        <!-- although hidden, this add-button needs to exist! //-->
-        <button type="button" class="addable-add" style="position:absolute;right:0px;opacity:0.0;filter:alpha(opacity=0);" disabled></button>
-    </div>
-</fieldset>
-
-<fieldset id="bmkconfig" name="bmkconfig" class="primary expanded">
-    <legend>Configuratoin BMK-Webstatus-Page</legend>
-    <span>Interface-List:</span>         <input id="bmkinferfacelist"    name="bmkinferfacelist"    type="text" size="70" /><br>
-    <span>Traceroute-Destination:</span> <input id="bmktracerouteip"     name="bmktracerouteip"     type="text" size="30" /><br>
-    <input id="bmkadminlink"         name="bmkadminlink"         type="checkbox" /> <span>Show link to admin login page</span><br>
-    <input id="bmknodedblookup"      name="bmknodedblookup"      type="checkbox" /> <span>Load node data for name lookup and route/node count</span><br>
-</fieldset>
-
-<div style="padding:15px;border: 1px solid lightgray;width:648px">
-    <input id="routerrsakey" name="routerrsakey" type="hidden" disabled />
-    <input id="routername" name="routername" type="hidden" disabled />
-    <input id="updatefromgithub"     name="updatefromgithub"     type="checkbox" /><span> Upgrade Wizard from GitHub (online only) on 'Apply'</span><br>
-    <input id="registercert"         name="registercert"         type="checkbox" /><span> Register FQDN and renew/install Certificate on 'Apply'</span><br>
-    <input id="deployactive"         name="deployactive"         type="checkbox" /><span> Try to establish server.pem on local antennas after renewal</span> -- [<a download="router.rsa" href="#" id="downloadkey">download keyfile for AirOS</a>]<br>
-    In order to establish server.pem on AirOS devices, each target device needs the router's public ssh key registered. Use the download-link to retrieve 
-    the router's key and to add it on AirOS in Settings->Services->Authorized Keys. Alternatively you can run <em>sudo /config/letsencrypt/deploykeys.sh</em> 
-    in CLI to deploy all local antennas at once.<br>
+<div>
+    <span>Olsrd can autodetect changes in NIC configurations (IP address changes etc.).<br>This is Enabled by default but can be turned off pr. NIC to save CPU cycles.<br></span>
+    <input id="olsrdrestart" name="olsrdrestartnow"  type="checkbox" /><span> Restart OLSR-IPv4 daemon on 'Apply'.</span><br>
+    <input id="olsrdrestart" name="olsrdrestart6now" type="checkbox" /><span> Restart OLSR-IPv6 daemon on 'Apply'.</span><br>
     <br>
-    <input id="restartorigenabled"   name="restartorigenabled"   type="checkbox" /><span> Restart original lighttpd on 'Apply'</span><br>
-    <input id="restartcustomenabled" name="restartcustomenabled" type="checkbox" /><span> Restart custom lighttpd on 'Apply'.</span><br>
-    <br>
-    Wizard will raise the error "save failed" as webservices will restart and break the response session.
 </div>
 <br><br>
 <script>
-function disable_group(group) {
-    var nodes = document.getElementById(group).getElementsByTagName('*');
-    for(var i=0; i<nodes.length; i++) { 
-        if (nodes[i].name == null) {
-        } else if (nodes[i].name.match(/status/)) {
-            if (nodes[i].value.match(/err/)) {
-                nodes[i].style.color = "red";
-            } else if (nodes[i].value.match(/old|link|missing/)) {
-                nodes[i].style.color = "orange";
-            } else if (nodes[i].value.match(/ok|generate/)) {
-                nodes[i].style.color = "green";
-            }
-        }
-        nodes[i].disabled = true; 
+function disable() {
+    var v4nodes = document.getElementById("ipv4olsrd").getElementsByTagName('*');
+    for(var i=0; i<v4nodes.length; i++)
+    {
+        v4nodes[i].disabled = true;
+    }
+    var v6nodes = document.getElementById("ipv6olsrd").getElementsByTagName('*');
+    for(var i=0; i<v6nodes.length; i++)
+    {
+        v6nodes[i].disabled = true;
+    }
+    var cfgnodes = document.getElementById("olsrdsettings").getElementsByTagName('*');
+    for(var i=0; i<cfgnodes.length; i++)
+    {
+        cfgnodes[i].disabled = true;
+    }
+    var restartnodes = document.getElementById("olsrdrestart").getElementsByTagName('*');
+    for(var i=0; i<restartnodes.length; i++)
+    {
+        restartnodes[i].disabled = true;
     }
 }
-function colors() {
+function enable() {
+    var v4nodes = document.getElementById("ipv4olsrd").getElementsByTagName('*');
+    for(var i=0; i<v4nodes.length; i++)
+    {
+        if ((v4nodes[i].name == "olsrd4interface") || (v4nodes[i].name == "ipv4address")) {
+            v4nodes[i].disabled = true;
+        } else {
+            v4nodes[i].disabled = false;
+        }
+    }
+    var v6nodes = document.getElementById("ipv6olsrd").getElementsByTagName('*');
+    for(var i=0; i<v6nodes.length; i++)
+    {
+        if ((v6nodes[i].name == "olsrd6interface") || (v6nodes[i].name == "ipv6address")) {
+            v6nodes[i].disabled = true;
+        } else {
+            v6nodes[i].disabled = false;
+        }
+    }
+    var cfgnodes = document.getElementById("olsrdsettings").getElementsByTagName('*');
+    for(var i=0; i<cfgnodes.length; i++)
+    {
+        cfgnodes[i].disabled = false;
+    }
+    var restartnodes = document.getElementById("olsrdrestart").getElementsByTagName('*');
+    for(var i=0; i<restartnodes.length; i++)
+    {
+        restartnodes[i].disabled = false;
+    }
+}
+function validate() {
+}
+document.onchange=function(){
+    document.getElementById('daemonstatus').disabled = true;
     var input = document.getElementById('pkgstatus');
-    input.style.color = "black";
-    if (input.value.match(/error/)) {
+    if(input.value.match(/^error/)) {
         input.style.color = "red";
-        //disable();
-    } else if (input.value.match(/success/)) {
+        disable();
+    } else if (input.value.match(/^success/)) {
         input.style.color = "green";
-        //enable();
+        enable();
     }
     var input = document.getElementById('updatestatus');
     input.style.color = "black";
@@ -162,92 +210,21 @@ function colors() {
     if (input.value.match(/new version available/)) {
         document.getElementById('updatefromgithub').disabled = false;
         input.style.color = "red";
-        //disable();
     } else if (input.value.match(/up-to-date/)) {
         input.style.color = "green";
-        //enable();
     } 
     document.getElementById('updatestatus').disabled = true;
-    // cert expiary colors
-    var certexpire = document.getElementById('certexpire');
-    var certfrom = document.getElementById('certfrom');
-    var certuntil = document.getElementById('certuntil');
-    certexpire.style.color = "black";
-    certfrom.style.color   = "black";
-    certuntil.style.color  = "black";
-    if(certexpire.value.match(/expired/)) {
-        certexpire.style.color = "red";
-        certfrom.style.color   = "red";
-        certuntil.style.color  = "red";
-    } else if (certexpire.value.match(/left/)) {
-        certexpire.style.color = "green";
-        certfrom.style.color   = "green";
-        certuntil.style.color  = "green";
-    }
-    // FQDN values
-    var currentfqdn = document.getElementById('currentfqdn');
-    var certfqdn = document.getElementById('certfqdn');
-    var domainfqdn = document.getElementById('domainfqdn');
-    certfqdn.style.color   = "black";
-    domainfqdn.style.color = "black";
-    currentfqdn.style.color = "black";
-    if ((certfqdn.value==domainfqdn.value) && (certfqdn.value==currentfqdn.value) && (!(currentfqdn.value.match(/not available/)))) {
-        currentfqdn.style.color = "green";
-        certfqdn.style.color   = "green";
-        domainfqdn.style.color  = "green";
-    } else if (certfqdn.value==domainfqdn.value) {
-        if (certfqdn.value=='not available') {
-            if (currentfqdn.value.match(/not available/)) {
-                currentfqdn.style.color = "orange";
-            }
-        } else {
-            certfqdn.style.color   = "green";
-            domainfqdn.style.color = "green";
-            if (currentfqdn.value.match(/not available/)) {
-                currentfqdn.style.color = "orange";
-            } else {
-                currentfqdn.style.color = "red";
-            }
-        }
-    }
-    certexpire.disabled = true;
-    certfrom.disabled = true;
-    certuntil.disabled = true;
-    currentfqdn.disabled = true;
-    certfqdn.disabled = true;
-    domainfqdn.disabled = true;
-    
-    document.getElementById('pkgstatus').disabled = true;
-    document.getElementById('wsstatus').disabled = true;
-    document.getElementById('lestatus').disabled = true;
-    document.getElementById('cestatus').disabled = true;
-    //document.getElementById('restartorigenabled').disabled = true;
-    //document.getElementById('orighttpport').disabled = true;
-    //document.getElementById('orighttpsport').disabled = true;
-    //document.getElementById('customhttpport').disabled = true;
-    //document.getElementById('customhttpsport').disabled = true;
-    document.getElementById('currentdet').disabled = true;
-    
-    disable_group('cefiles');
-    disable_group('lefiles');
-    disable_group('wsfiles');
-    disable_group('allfiles');
-}
-function validate() {
-}
-document.onchange=function(){
-    var downloadkey = document.getElementById('downloadkey');
-    var routerrsakey = document.getElementById('routerrsakey');
-    var routername = document.getElementById('routername');
-    downloadkey.setAttribute('download',routername.value+'.rsa');
-    downloadkey.setAttribute('href','data:text/plain;charset=utf-8,'+encodeURIComponent(routerrsakey.value));
-    colors();
-    var customhttpport = document.getElementById('customhttpport');
-    var customhttpsport = document.getElementById('customhttpsport');
-    if ((customhttpport.value=='0') ||(customhttpport.value==null))  { customhttpport.disabled=true;}
-    if ((customhttpsport.value=='0')||(customhttpsport.value==null)) { customhttpsport.disabled=true;}
 }
 document.onsubmit=function(){
-    colors();
+    var input = document.getElementById('pkgstatus');
+    if(input.value.match(/^error/)) {
+        disable();
+    } else if (input.value.match(/^success/)) {
+        enable();
+    }
+    document.getElementById('pkgstatus').disabled = true;
+    document.getElementById('daemonstatus').disabled = true;
+    document.getElementById('updatefromgithub').disabled = true;
+    document.getElementById('updatestatus').disabled = true;
 }
 </script>
