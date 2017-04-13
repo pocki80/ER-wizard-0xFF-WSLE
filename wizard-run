@@ -4350,7 +4350,8 @@ done
 
 # STEP 2 -> get list of local antennas
 PORT=22
-ANTENNEN=$(/usr/sbin/ubnt-discover | grep -E "P5B|NB5|N5B|P5C|N5C|N5N|AG5|B5N|LM5|AGW|TSW")
+LANSEGM=$(ip -4 addr | grep -oE "10\..{5,11}/.{1,2}" | awk -F. {'print $1"."$2"."$3"."'})
+ANTENNEN=$(/usr/sbin/ubnt-discover | grep -E "P5B|NB5|N5B|P5C|N5C|N5N|AG5|B5N|LM5|AGW|TSW" | grep $LANSEGM)
 echo "${ANTENNEN[@]}"
 
 #prepare deploy-sshkey script
@@ -4412,7 +4413,8 @@ if [ ! -f /root/.ssh/id_rsa ] && [ ! -f /root/.ssh/id_rsa.pub ]; then
 fi
 
 PORT=22
-ANTENNEN=$(/usr/sbin/ubnt-discover | grep -E "P5B|NB5|N5B|P5C|N5C|N5N|AG5|B5N|LM5|AGW|TSW")
+LANSEGM=$(ip -4 addr | grep -oE "10\..{5,11}/.{1,2}" | awk -F. {'print $1"."$2"."$3"."'})
+ANTENNEN=$(/usr/sbin/ubnt-discover | grep -E "P5B|NB5|N5B|P5C|N5C|N5N|AG5|B5N|LM5|AGW|TSW" | grep $LANSEGM)
 echo "${ANTENNEN[@]}"
 
 echo 'echo "'"$(cat /config/letsencrypt/domain.key)"'" >/tmp/domain.key'  >/tmp/sshcrtdeploy.sh
