@@ -117,9 +117,9 @@ versioninfo=201704134
     <input id="routerrsakey" name="routerrsakey" type="hidden" disabled />
     <input id="routername" name="routername" type="hidden" disabled />
     <input id="updatefromgithub"     name="updatefromgithub"     type="checkbox" /><span> Upgrade Wizard from GitHub (online only) on 'Apply'</span><br>
-    <input id="registercert"         name="registercert"         type="checkbox" /><span class="text" data-infotip='Run this job to initially register this domain, or to renew the certificate.'> Register FQDN and renew/install Certificate on 'Apply'</span><br>
-    <input id="deployactive"         name="deployactive"         type="checkbox" /><span class="text" data-infotip='Router needs Management-IP 10.x.x.100/24 or 10.x.x.200/24 on the same subnet like AirOS-Antennas! All discovered AirOS-devices will be connected through ssh to get their lighttpd SSL certificate updated. SSH connection will only work, if the routers public key was deployed to AirOS in advance! To do so, run the deploy script or download and deploy the key using WebGUI.'> Try to establish server.pem on local antennas after renewal</span> 
-    -- [<a download="router.rsa" href="#" id="downloadkey">download keyfile for AirOS</a>]<br>
+    <input id="registercert"         name="registercert"         type="checkbox" /><div><span class="text" data-infotip='Run this job to initially register this domain, or to renew the certificate.'> Register FQDN and renew/install Certificate on 'Apply'</span></div><br>
+    <input id="deployactive"         name="deployactive"         type="checkbox" /><div><span class="text" data-infotip='Router needs Management-IP 10.x.x.100/24 or 10.x.x.200/24 on the same subnet like AirOS-Antennas! All discovered AirOS-devices will be connected through ssh to get their lighttpd SSL certificate updated. SSH connection will only work, if the routers public key was deployed to AirOS in advance! To do so, run the deploy script or download and deploy the key using WebGUI.'> Try to establish server.pem on local antennas after renewal
+    -- [<a download="router.rsa" href="#" id="downloadkey">download keyfile for AirOS</a>]</span></div><br>
     In order to establish server.pem on AirOS devices, each target device needs the router's public ssh key registered. Use the download-link to retrieve 
     the router's key and to add it on AirOS in Settings->Services->Authorized Keys. Alternatively you can run <em>sudo /config/letsencrypt/deploykeys.sh</em> 
     in CLI to deploy all local antennas at once.<br>
