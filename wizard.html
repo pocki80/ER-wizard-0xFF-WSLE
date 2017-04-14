@@ -2,7 +2,7 @@
 
 EdgeMAX Wizard "0xFF-BMK-Webstatus-LetsEncrypt" created 02/2017 by CPO/BMK for FunkFeuer.at
 Works on EdgeRouter and EdgeRouter X / X-SFP (system version 1.9.0+)
-versioninfo=201704141
+versioninfo=201704142
 ^-- use version identifier as number: YYYYMMDDX whereas X can be intraday-version
 
 -->
@@ -106,7 +106,7 @@ versioninfo=201704141
 </fieldset>
 
 <fieldset id="bmkconfig" name="bmkconfig" class="primary expanded">
-    <legend>Configuratoin BMK-Webstatus-Page</legend>
+    <legend>Configuration BMK-Webstatus-Page</legend>
     <span>Interface-List:</span>         <input id="bmkinferfacelist"    name="bmkinferfacelist"    type="text" size="70" /><br>
     <span>Traceroute-Destination:</span> <input id="bmktracerouteip"     name="bmktracerouteip"     type="text" size="30" /><br>
     <input id="bmkadminlink"         name="bmkadminlink"         type="checkbox" /> <span>Show link to admin login page</span><br>
@@ -116,13 +116,16 @@ versioninfo=201704141
 <div style="padding:15px;border: 1px solid lightgray;width:648px">
     <input id="routerrsakey" name="routerrsakey" type="hidden" disabled />
     <input id="routername" name="routername" type="hidden" disabled />
-    <div><span><input id="updatefromgithub"     name="updatefromgithub"     type="checkbox" />&nbsp;</span></div><div><span> Upgrade Wizard from GitHub (online only) on 'Apply'</span></div><br>
-    <div><span><input id="registercert"         name="registercert"         type="checkbox" />&nbsp;</span></div><div><span class="text" data-infotip='Run this job to initially register this domain, or to renew the certificate.'> Register FQDN and renew/install Certificate on 'Apply'</span></div><br>
-    <div><span><input id="deployactive"         name="deployactive"         type="checkbox" />&nbsp;</span></div><div><span class="text" data-infotip='Router needs Management-IP 10.x.x.100/24 or 10.x.x.200/24 on the same subnet like AirOS-Antennas! All discovered AirOS-devices will be connected through ssh to get their lighttpd SSL certificate updated. SSH connection will only work, if the routers public key was deployed to AirOS in advance! To do so, run the deploy script or download and deploy the key using WebGUI.'> Try to establish server.pem on local antennas after renewal
-    -- [<a download="router.rsa" href="#" id="downloadkey">download keyfile for AirOS</a>]</span></div><br>
-    In order to establish server.pem on AirOS devices, each target device needs the router's public ssh key registered. Use the download-link to retrieve 
-    the router's key and to add it on AirOS in Settings->Services->Authorized Keys. Alternatively you can run <em>sudo /config/letsencrypt/deploykeys.sh</em> 
-    in CLI to deploy all local antennas at once.<br>
+  <table border="0">
+    <tr><td><div><span><input id="updatefromgithub" name="updatefromgithub" type="checkbox" />&nbsp;</span></div><div><span class="text" data-infotip='Load and install newest version directly from Github'> Upgrade Wizard from GitHub (online only) on 'Apply'</span></div></td></tr>
+    <tr><td><div><span><input id="registercert"     name="registercert"     type="checkbox" />&nbsp;</span></div><div><span class="text" data-infotip='Run this job to initially register this domain, or to renew the certificate.'> Register FQDN and renew/install Certificate on 'Apply'</span></div></td></tr>
+    <tr><td><div><span><input id="deployactive"     name="deployactive"     type="checkbox" />&nbsp;</span></div><div><span class="text" data-infotip='Router needs Management-IP 10.x.x.100/24 or 10.x.x.200/24 on the same subnet like AirOS-Antennas! All discovered AirOS-devices will be connected through ssh to get their lighttpd SSL certificate updated. SSH connection will only work, if the routers public key was deployed to AirOS in advance! To do so, run the deploy script or download and deploy the key using WebGUI.'> Try to establish server.pem on local antennas after renewal</span></div></td></tr>
+    <tr><td><div><span class="text"> 
+      [<b><a download="router.rsa" href="#" id="downloadkey">download keyfile for AirOS</a></b>] -> In order to establish server.pem on AirOS devices, each target device needs the router's public ssh key registered. Use the download-link to retrieve 
+      the router's key and to add it on AirOS in Settings->Services->Authorized Keys. Alternatively you can run <em>sudo /config/letsencrypt/deploykeys.sh</em> 
+      in CLI to deploy all local antennas at once.
+      </span></div></td></tr>
+  </table>
     <br>
     <div><span><input id="restartorigenabled"   name="restartorigenabled"   type="checkbox" />&nbsp;</span></div><div><span> Restart original lighttpd on 'Apply'</span></div><br>
     <div><span><input id="restartcustomenabled" name="restartcustomenabled" type="checkbox" />&nbsp;</span></div><div><span> Restart custom lighttpd on 'Apply'.</span></div><br>
