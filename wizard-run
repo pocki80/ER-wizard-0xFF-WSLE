@@ -4933,15 +4933,15 @@ apply () {
     # update wizard from github
     # load actual sources (ignoring releases)
     updatefromgithub=$(jq -M -r '.updatefromgithub' $INPUT)
+    olsrdwizard=""
+    for i in $(find /config/wizard/feature/ -name wizard.html | grep -iv olsr); do
+        if [[ $(head $i -n 10 | grep '0xFF-BMK-Webstatus-LetsEncrypt') ]]; then
+            olsrdwizard=$i
+            break
+        fi
+    done
     if [[ "$updatefromgithub" == "on" ]]; then
         echo "update from github requested" >>$log 2>>$log
-        olsrdwizard=""
-        for i in $(find /config/wizard/feature/ -name wizard.html | grep -iv olsr); do
-            if [[ $(head $i -n 10 | grep '0xFF-BMK-Webstatus-LetsEncrypt') ]]; then
-                olsrdwizard=$i
-                break
-            fi
-        done
         if [ ! $olsrdwizard ]; then
             echo "error: 0xFF-BMK-Webstatus-LetsEncrypt wizard.html not found!" >>$log 2>>$log
         elif [ $((onlinecheck)) != 0 ]; then
@@ -4980,7 +4980,8 @@ apply () {
             echo "Installing "$(dirname $wiz)"..." >>$log 2>>$log
             if [ ! -d $(dirname $wiz) ]; then 
                 mkdir $(dirname $wiz) >>$log 2>>$log
-                chown www-data:vyattacf $(dirname $wiz) >>$log 2>>$log
+                chmod --reference=$(dirname $olsrdwizard) $(dirname $wiz) >>$log 2>>$log
+                chown --reference=$(dirname $olsrdwizard) $(dirname $wiz) >>$log 2>>$log
             fi
             curl -sL -o /tmp/ER-wizard.tar.gz --connect-timeout 2 https://api.github.com/repos/$git2owner/$git2repo/tarball >>$log 2>>$log
             tar   -xvzf /tmp/ER-wizard.tar.gz -C /tmp >/tmp/result.txt >>$log 2>>$log
