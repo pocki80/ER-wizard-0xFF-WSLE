@@ -5006,19 +5006,19 @@ apply () {
            [ "$(grep -i "wizard-0xffwsle=no" /config/user-data/autoupdate.dat |wc -l)" == "1" ]; then
             linenumber=$(grep -ni "wizard-0xffwsle=no" /config/user-data/autoupdate.dat | awk -F: {'print $1'})
             sed -i $linenumber'd' /config/user-data/autoupdate.dat 2>>$log
-            sed -i '/^$/d' d/config/user-data/autoupdate.dat 2>>$log
+            sed -i '/^$/d' /config/user-data/autoupdate.dat 2>>$log
         fi
         if [ ! -f /config/user-data/autoupdate.dat ]; then
             #create settings file if missing
             echo 'wizard-0xffwsle=yes' >/config/user-data/autoupdate.dat 2>>$log
             echo '' >>/config/user-data/autoupdate.dat 2>>$log
-            sed -i '/^$/d' d/config/user-data/autoupdate.dat 2>>$log
+            sed -i '/^$/d' /config/user-data/autoupdate.dat 2>>$log
         else
             #add yes line if missing
             if [ "$(grep -i "wizard-0xffwsle=yes" /config/user-data/autoupdate.dat |wc -l)" == "0" ]; then
                 echo 'wizard-0xffwsle=yes' >>/config/user-data/autoupdate.dat 2>>$log
                 echo '' >>/config/user-data/autoupdate.dat 2>>$log
-                sed -i '/^$/d' d/config/user-data/autoupdate.dat 2>>$log
+                sed -i '/^$/d' /config/user-data/autoupdate.dat 2>>$log
             fi
         fi
     else
@@ -5027,7 +5027,7 @@ apply () {
            [ "$(grep -i "wizard-0xffwsle=yes" /config/user-data/autoupdate.dat |wc -l)" == "1" ]; then
             linenumber=$(grep -ni "wizard-0xffwsle=yes" /config/user-data/autoupdate.dat | awk -F: {'print $1'})
             sed -i $linenumber'd' /config/user-data/autoupdate.dat 2>>$log
-            sed -i '/^$/d' d/config/user-data/autoupdate.dat 2>>$log
+            sed -i '/^$/d' /config/user-data/autoupdate.dat 2>>$log
         fi
     fi
     # end
