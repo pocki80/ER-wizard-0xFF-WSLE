@@ -4984,7 +4984,7 @@ apply () {
                 chown --reference=$(dirname $olsrdwizard) $(dirname $wiz) >>$log 2>>$log
             fi
             curl -sL -o /tmp/ER-wizard.tar.gz --connect-timeout 2 https://api.github.com/repos/$git2owner/$git2repo/tarball >>$log 2>>$log
-            tar   -xvzf /tmp/ER-wizard.tar.gz -C /tmp >/tmp/result.txt >>$log 2>>$log
+            tar   -xvzf /tmp/ER-wizard.tar.gz -C /tmp >/tmp/result.txt 2>>$log
             rm -f       /tmp/ER-wizard.tar.gz >>$log 2>>$log
             while read LINE; do
                 set $LINE
