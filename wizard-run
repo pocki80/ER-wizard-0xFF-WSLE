@@ -4561,7 +4561,7 @@ load () {
     else
         CURRENTVERSION=$(head -n 8 $olsrdwizard | grep -i versioninfo= | awk -F"=" {'print $2'})
         if [ $((onlinecheck)) = 0 ]; then
-            GITVERSION=$(curl -sL --connect-timeout 2 https://raw.githubusercontent.com/$gitowner/$gitrepo/$gitbranch/wizard.html | head -n 8 | grep -i versioninfo= | awk -F"=" {'print $2'})
+            GITVERSION=$(curl -sL --connect-timeout 2 --speed-time 2 https://raw.githubusercontent.com/$gitowner/$gitrepo/$gitbranch/wizard.html | head -n 8 | grep -i versioninfo= | awk -F"=" {'print $2'})
             if [ "$GITVERSION" ] && [ "$CURRENTVERSION" ]; then 
                 if [ $(($GITVERSION)) \> $(($CURRENTVERSION)) ]; then 
                     updatetext="new version available: "$GITVERSION", current: "$CURRENTVERSION >>$log 2>>$log
@@ -4947,7 +4947,7 @@ apply () {
         elif [ $((onlinecheck)) != 0 ]; then
             echo "currently offline" >>$log 2>>$log
         else
-            curl -sL -o /tmp/ER-wizard-0xFF-WSLE_latest.tar.gz --connect-timeout 2 https://api.github.com/repos/$gitowner/$gitrepo/tarball >>$log 2>>$log
+            curl -sL -o /tmp/ER-wizard-0xFF-WSLE_latest.tar.gz --connect-timeout 2 --speed-time 2 https://api.github.com/repos/$gitowner/$gitrepo/tarball >>$log 2>>$log
             tar   -xvzf /tmp/ER-wizard-0xFF-WSLE_latest.tar.gz -C /tmp >/tmp/result.txt 2>>$log
             rm -f       /tmp/ER-wizard-0xFF-WSLE_latest.tar.gz >>$log 2>>$log
             while read LINE; do
@@ -4983,7 +4983,7 @@ apply () {
                 chmod --reference=$(dirname $olsrdwizard) $(dirname $wiz) >>$log 2>>$log
                 chown --reference=$(dirname $olsrdwizard) $(dirname $wiz) >>$log 2>>$log
             fi
-            curl -sL -o /tmp/ER-wizard.tar.gz --connect-timeout 2 https://api.github.com/repos/$git2owner/$git2repo/tarball >>$log 2>>$log
+            curl -sL -o /tmp/ER-wizard.tar.gz --connect-timeout 2 --speed-time 2 https://api.github.com/repos/$git2owner/$git2repo/tarball >>$log 2>>$log
             tar   -xvzf /tmp/ER-wizard.tar.gz -C /tmp >/tmp/result.txt 2>>$log
             rm -f       /tmp/ER-wizard.tar.gz >>$log 2>>$log
             while read LINE; do
