@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 # EdgeMAX Wizard "0xFF-BMK-Webstatus-LetsEncrypt" created 02/2017 by CPO/BMK for FunkFeuer.at
-# Version 20170414/bmk4.6
+# Version 20170418/bmk4.6
 # ^-- previous line is used frombmk-webstatus-package as version identification, dont remove "Version "
 # Shortform: 0xffwsle 0xFF-WSLE
 #
@@ -4908,7 +4908,11 @@ esac
     ### BMK Config
     ##########
 
-    if [ -f /config/letsencrypt/deploysetting.dat ] && [ "$(grep -i "deploycertificate=yes" /config/letsencrypt/deploysetting.dat |wc -l)" == "1" ]; then
+    if [ -f /config/user-data/autoupdate.dat ] && [ "$(grep -i "wizard-0xffwsle=yes" /config/user-data/autoupdate.dat | wc -l)" == "1" ]; then
+        autoupdatefromgithub=',"autoupdatefromgithub":"on"'
+    fi
+
+    if [ -f /config/letsencrypt/deploysetting.dat ] && [ "$(grep -i "deploycertificate=yes" /config/letsencrypt/deploysetting.dat | wc -l)" == "1" ]; then
         deployactive=',"deployactive":"on"'
     fi
     if [ -f /config/letsencrypt/id_rsa.pub ]; then
@@ -4919,7 +4923,7 @@ esac
 
     # get all variables together for output
     echo -n "{\"success\":\"1\",\"data\":{ $wslepackagestatus $lepackagestatus $wspackagestatus $cepackagestatus $updatestatus $allfiles $wsfiles $lefiles $cefiles"
-    echo -n "$ledetails $restartorigenabled $restartcustomenabled $origports $customports $bmksettings $deployactive },"
+    echo -n "$ledetails $restartorigenabled $restartcustomenabled $origports $customports $bmksettings $deployactive $autoupdatefromgithub },"
     echo    " \"definition\":{ }}"
 }
 
@@ -4957,25 +4961,98 @@ apply () {
             $(dirname $olsrdwizard)"/"wizard-run load >>$log 2>>$log
         fi
     fi
+    autoupdatefromgithub=$(jq -M -r '.autoupdatefromgithub' $INPUT)
+    if [[ "$autoupdatefromgithub" == "on" ]]; then
+        #check for auto-update wizard, install if not there!!
+        wiz=""
+        for i in $(find /config/wizard/feature/ -name wizard.html); do
+            if [[ $(head $i -n 10 | grep "ER-wizard-AutoUpdate") ]]; then
+                wiz=$i
+                break
+            fi
+        done
+        if [ ! $wiz ]; then 
+            #autoupdate-wizard mit scripten fehlt, installieren - offline-install???
+            git2owner="pocki80"
+            git2repo="ER-wizard-AutoUpdate"
+            git2branch="master"
+            wiz="/config/wizard/feature/AutoUpdate/wizard.html"
+            echo "Update "$(dirname $wiz)"..." >>$log 2>>$log
+            curl -sL -o /tmp/ER-wizard.tar.gz --connect-timeout 2 https://api.github.com/repos/$git2owner/$git2repo/tarball >>$log 2>>$log
+            tar   -xvzf /tmp/ER-wizard.tar.gz -C /tmp >/tmp/result.txt >>$log 2>>$log
+            rm -f       /tmp/ER-wizard.tar.gz >>$log 2>>$log
+            while read LINE; do
+                set $LINE
+                if [ $(basename $LINE) == "wizard-run" ] || [ $(basename $LINE) == "wizard.html" ] || [ $(basename $LINE) == "validator.json" ]; then W=1; else W=2; fi
+                [ -f "/tmp/"$LINE ] && [ $W == "1" ] && cp "/tmp/"$LINE $(dirname $wiz)"/"$(basename $LINE)
+            done < /tmp/result.txt
+            rm /tmp/result.txt
+            rm -Rf /tmp/$git2owner-$git2repo* >>$log 2>>$log
+            chmod 755 $(dirname $wiz)"/"wizard-run >>$log 2>>$log
+            echo "Update done, now triggering initial load..." >>$log 2>>$log
+            $(dirname $wiz)"/"wizard-run load  >>$log 2>>$log
+        fi
+        #remove "no" if exists
+        if [ -f /config/user-data/autoupdate.dat ] &&
+           [ "$(grep -i "wizard-0xffwsle=no" /config/user-data/autoupdate.dat |wc -l)" == "1" ]; then
+            linenumber=$(grep -ni "wizard-0xffwsle=no" /config/user-data/autoupdate.dat | awk -F: {'print $1'})
+            sed -i $linenumber'd' /config/user-data/autoupdate.dat 2>>$log
+            sed -i '/^$/d' d/config/user-data/autoupdate.dat 2>>$log
+        fi
+        if [ ! -f /config/user-data/autoupdate.dat ]; then
+            #create settings file if missing
+            echo 'wizard-0xffwsle=yes' >/config/user-data/autoupdate.dat 2>>$log
+            echo '' >>/config/user-data/autoupdate.dat 2>>$log
+            sed -i '/^$/d' d/config/user-data/autoupdate.dat 2>>$log
+        else
+            #add yes line if missing
+            if [ "$(grep -i "wizard-0xffwsle=yes" /config/user-data/autoupdate.dat |wc -l)" == "0" ]; then
+                echo 'wizard-0xffwsle=yes' >>/config/user-data/autoupdate.dat 2>>$log
+                echo '' >>/config/user-data/autoupdate.dat 2>>$log
+                sed -i '/^$/d' d/config/user-data/autoupdate.dat 2>>$log
+            fi
+        fi
+    else
+        #remove yes line if exists
+        if [ -f /config/user-data/autoupdate.dat ] &&
+           [ "$(grep -i "wizard-0xffwsle=yes" /config/user-data/autoupdate.dat |wc -l)" == "1" ]; then
+            linenumber=$(grep -ni "wizard-0xffwsle=yes" /config/user-data/autoupdate.dat | awk -F: {'print $1'})
+            sed -i $linenumber'd' /config/user-data/autoupdate.dat 2>>$log
+            sed -i '/^$/d' d/config/user-data/autoupdate.dat 2>>$log
+        fi
+    fi
     # end
     ####### wizard manual update from github
 
     deployactive=$(jq -M -r '.deployactive' $INPUT)
     if [[ "$deployactive" == "on" ]]; then
+        #remove "no" if exists
+        if [ -f /config/letsencrypt/deploysetting.dat ] &&
+           [ "$(grep -i "deploycertificate=no" /config/letsencrypt/deploysetting.dat |wc -l)" == "1" ]; then
+            linenumber=$(grep -ni "deploycertificate=no" /config/letsencrypt/deploysetting.dat | awk -F: {'print $1'})
+            sed -i $linenumber'd' /config/letsencrypt/deploysetting.dat 2>>$log
+            sed -i '/^$/d' d/config/letsencrypt/deploysetting.dat 2>>$log
+        fi
         if [ ! -f /config/letsencrypt/deploysetting.dat ]; then
+            #create settings file if missing
             echo 'deploycertificate=yes' >/config/letsencrypt/deploysetting.dat 2>>$log
             echo '' >>/config/letsencrypt/deploysetting.dat 2>>$log
+            sed -i '/^$/d' d/config/letsencrypt/deploysetting.dat 2>>$log
         else
+            #add yes line if missing
             if [ "$(grep -i "deploycertificate=yes" /config/letsencrypt/deploysetting.dat |wc -l)" == "0" ]; then
                 echo 'deploycertificate=yes' >>/config/letsencrypt/deploysetting.dat 2>>$log
                 echo '' >>/config/letsencrypt/deploysetting.dat 2>>$log
+                sed -i '/^$/d' d/config/letsencrypt/deploysetting.dat 2>>$log
             fi
         fi
     else
+        #remove yes line if exists
         if [ -f /config/letsencrypt/deploysetting.dat ] &&
            [ "$(grep -i "deploycertificate=yes" /config/letsencrypt/deploysetting.dat |wc -l)" == "1" ]; then
-           linenumber=$(grep -ni "deploycertificate=yes" /config/letsencrypt/deploysetting.dat | awk -F: {'print $1'})
-           sed -i $linenumber'd' /config/letsencrypt/deploysetting.dat 2>>$log
+            linenumber=$(grep -ni "deploycertificate=yes" /config/letsencrypt/deploysetting.dat | awk -F: {'print $1'})
+            sed -i $linenumber'd' /config/letsencrypt/deploysetting.dat 2>>$log
+            sed -i '/^$/d' d/config/letsencrypt/deploysetting.dat 2>>$log
         fi
     fi
 

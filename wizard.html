@@ -2,8 +2,11 @@
 
 EdgeMAX Wizard "0xFF-BMK-Webstatus-LetsEncrypt" created 02/2017 by CPO/BMK for FunkFeuer.at
 Works on EdgeRouter and EdgeRouter X / X-SFP (system version 1.9.0+)
-versioninfo=201704145
+versioninfo=201704180
 ^-- use version identifier as number: YYYYMMDDX whereas X can be intraday-version
+autoupdate=201704180
+^-- set autoupdate the same version identifier to allow autoupdates
+
 
 -->
 <div class="instructions">
@@ -11,7 +14,7 @@ versioninfo=201704145
 </div>
 <legend style="position:absolute;right:0px;padding:5px;">
     <center>EdgeMAX Wizard "0xFF-BMK-Webstatus-LetsEncrypt"<br>created 02/2017 by CPO/BMK for FunkFeuer.at<br>
-    Version 20170414/bmk4.6</center>
+    Version 20170418/bmk4.6</center>
 </legend>
 <div style="padding:15px;border: 1px solid lightgray;width:648px">
   <table border="0">
@@ -121,6 +124,7 @@ versioninfo=201704145
     <input id="routername" name="routername" type="hidden" disabled />
   <table border="0">
     <tr><td><div><span><input id="updatefromgithub" name="updatefromgithub" type="checkbox" />&nbsp;</span></div><div><span class="text" data-infotip='Load and install newest version directly from Github'> Upgrade Wizard from GitHub (online only) on 'Apply'</span></div></td></tr>
+    <tr><td><div><span><input id="autoupdatefromgithub" name="autoupdatefromgithub" type="checkbox" />&nbsp;</span></div><div><span class="text" data-infotip='Runs a daily job checking for updates - installs available auto-updates automatically'> Upgrade Wizard from GitHub <b>automatically</b></span></div></td></tr>
     <tr><td><div><span><input id="registercert"     name="registercert"     type="checkbox" />&nbsp;</span></div><div><span class="text" data-infotip='Run this job to initially register this domain, or to renew the certificate.'> Register FQDN and renew/install Certificate on 'Apply'</span></div></td></tr>
     <tr><td><div><span><input id="deployactive"     name="deployactive"     type="checkbox" />&nbsp;</span></div><div><span class="text" data-infotip='Router needs Management-IP 10.x.x.100/24 or 10.x.x.200/24 on the same subnet like AirOS-Antennas! All discovered AirOS-devices will be connected through ssh to get their lighttpd SSL certificate updated. SSH connection will only work, if the routers public key was deployed to AirOS in advance! To do so, run the deploy script or download and deploy the key using WebGUI.'> Try to establish server.pem on local antennas after renewal</span></div></td></tr>
     <tr><td><div><span class="text"> 
