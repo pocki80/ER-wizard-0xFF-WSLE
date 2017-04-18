@@ -4977,19 +4977,23 @@ apply () {
             git2repo="ER-wizard-AutoUpdate"
             git2branch="master"
             wiz="/config/wizard/feature/AutoUpdate/wizard.html"
-            echo "Update "$(dirname $wiz)"..." >>$log 2>>$log
+            echo "Installing "$(dirname $wiz)"..." >>$log 2>>$log
+            if [ ! -d $(dirname $wiz) ]; then 
+                mkdir $(dirname $wiz) >>$log 2>>$log
+                chown www-data:vyattacf $(dirname $wiz) >>$log 2>>$log
+            fi
             curl -sL -o /tmp/ER-wizard.tar.gz --connect-timeout 2 https://api.github.com/repos/$git2owner/$git2repo/tarball >>$log 2>>$log
             tar   -xvzf /tmp/ER-wizard.tar.gz -C /tmp >/tmp/result.txt >>$log 2>>$log
             rm -f       /tmp/ER-wizard.tar.gz >>$log 2>>$log
             while read LINE; do
                 set $LINE
                 if [ $(basename $LINE) == "wizard-run" ] || [ $(basename $LINE) == "wizard.html" ] || [ $(basename $LINE) == "validator.json" ]; then W=1; else W=2; fi
-                [ -f "/tmp/"$LINE ] && [ $W == "1" ] && cp "/tmp/"$LINE $(dirname $wiz)"/"$(basename $LINE)
+                [ -f "/tmp/"$LINE ] && [ $W == "1" ] && cp "/tmp/"$LINE $(dirname $wiz)"/"$(basename $LINE) >>$log 2>>$log
             done < /tmp/result.txt
             rm /tmp/result.txt
             rm -Rf /tmp/$git2owner-$git2repo* >>$log 2>>$log
             chmod 755 $(dirname $wiz)"/"wizard-run >>$log 2>>$log
-            echo "Update done, now triggering initial load..." >>$log 2>>$log
+            echo "Installing done, now triggering initial load..." >>$log 2>>$log
             $(dirname $wiz)"/"wizard-run load  >>$log 2>>$log
         fi
         #remove "no" if exists
