@@ -4338,7 +4338,7 @@ if [ ! -f /root/.ssh/id_rsa ] && [ ! -f /root/.ssh/id_rsa.pub ]; then
   cp /config/letsencrypt/id_rsa /root/.ssh/id_rsa
   cp /config/letsencrypt/id_rsa.pub /root/.ssh/id_rsa.pub
 fi
-# für alle admin-user bereitstellen 
+# fÃ¼r alle admin-user bereitstellen 
 userlist=$(grep -E "^        user |^            level " /config/config.boot | sed 'N;s/\n/ /' | grep "level admin" | awk {'print $2'})
 #userlist="ubnt"
 for user in $userlist; do
@@ -4354,6 +4354,8 @@ for user in $userlist; do
 done
 
 # STEP 2 -> get list of local antennas
+# if multiple lan IPs 10.x.x.100-105/200 are found, try to find correct one looking to iptables/masquerade
+# sudo iptables -L POSTROUTING -n -t nat | grep -i masquerade | grep -E "10\..{3,7}\.0/24" | awk {'print $4'} | awk -F"/" {'print $1'}
 PORT=22
 LANSEGM=$(ip -4 addr | grep -oE "10\..{3,7}\.[12]0[012345]/.{1,2}" | head -n 1 | awk -F. {'print $1"."$2"."$3"."'})
 ANTENNEN=$(/usr/sbin/ubnt-discover | grep -E "P5B|NB5|N5B|P5C|N5C|N5N|AG5|B5N|LM5|AGW|TSW" | grep $LANSEGM)
