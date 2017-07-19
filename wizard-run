@@ -4453,6 +4453,7 @@ for IP in $(echo "${ANTENNEN[@]}" | awk {'print $3'}); do
   echo "Deploying ssh key to "$IP"..."
   ssh -o "StrictHostKeyChecking=no" -o "UserKnownHostsFile=/dev/null" -p $PORT ubnt@$IP 'sh' </tmp/sshkeydeploy.sh
   echo "Closing connection   "$IP"..."
+  echo ""
 done
 rm -f /tmp/sshkeydeploy.sh
 
@@ -4520,6 +4521,7 @@ for IP in $(echo "${ANTENNEN[@]}" | awk {'print $3'}); do
   echo "Deploying server cert to "$IP"..."
   ssh -o "StrictHostKeyChecking=no" -o "UserKnownHostsFile=/dev/null" -o "PasswordAuthentication=no" -p $PORT ubnt@$IP 'sh' </tmp/sshcrtdeploy.sh
   echo "Closing connection   "$IP"..."
+  echo ""
 done
 rm -f /tmp/sshcrtdeploy.sh
 
