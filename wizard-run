@@ -4978,6 +4978,10 @@ esac
     if [ -f /config/letsencrypt/deploysetting.dat ] && [ "$(grep -i "deploycertificate=yes" /config/letsencrypt/deploysetting.dat | wc -l)" == "1" ]; then
         deployactive=',"deployactive":"on"'
     fi
+    PORT=$(grep -i port= /config/letsencrypt/dploysetting.dat 2>/dev/null | cut -d= -f2)
+    [ "$PORT" ] || PORT=22
+    deployactive=$deployactive',"sshport":"'$PORT'"'
+
     if [ -f /config/letsencrypt/id_rsa.pub ]; then
         routerrsakey=$(cat /config/letsencrypt/id_rsa.pub)
         routername=$(hostname)
@@ -5126,6 +5130,22 @@ apply () {
             sed -i $linenumber'd' /config/letsencrypt/deploysetting.dat 2>>$log
             sed -i '/^$/d' /config/letsencrypt/deploysetting.dat 2>>$log
         fi
+    fi
+
+    SSHPORT=$(jq -M -r '.sshport' $INPUT)
+    [ "$SSHPORT" ] || SSHPORT=22
+    PORT=$(grep -i port= /config/letsencrypt/dploysetting.dat 2>/dev/null | cut -d= -f2)
+    [ "$PORT" ] || PORT=22
+    if [ ! $SSHPORT -eq $PORT ]; then
+        # remove current setting
+        if [ -f /config/letsencrypt/deploysetting.dat ] &&
+           [ "$(grep -i "port=" /config/letsencrypt/deploysetting.dat |wc -l)" == "1" ]; then
+            linenumber=$(grep -ni "port=" /config/letsencrypt/deploysetting.dat | awk -F: {'print $1'})
+            sed -i $linenumber'd' /config/letsencrypt/deploysetting.dat 2>>$log
+            sed -i '/^$/d' /config/letsencrypt/deploysetting.dat 2>>$log
+        fi
+        # add new setting
+        echo "port="$SSHPORT >>/config/letsencrypt/deploysetting.dat
     fi
 
     restartcustomenabled=$(jq -M -r '.restartcustomenabled' $INPUT)
