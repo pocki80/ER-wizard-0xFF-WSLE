@@ -2,9 +2,9 @@
 
 EdgeMAX Wizard "0xFF-BMK-Webstatus-LetsEncrypt" created 02/2017 by CPO/BMK for FunkFeuer.at
 Works on EdgeRouter and EdgeRouter X / X-SFP (system version 1.9.0+)
-versioninfo=201707193
+versioninfo=201707194
 ^-- use version identifier as number: YYYYMMDDX whereas X can be intraday-version
-autoupdate=201707193
+autoupdate=201707194
 ^-- set autoupdate the same version identifier to allow autoupdates
 
 
@@ -113,10 +113,10 @@ autoupdate=201707193
     <legend>Configuration BMK-Webstatus-Page</legend>
   <table border="0">
     <tr><td style="vertical-align:middle">Interface-List:</td>  <td><input style="right:10px" id="bmkinferfacelist" name="bmkinferfacelist" type="text" size="70" /></td></tr>
-    <tr><td style="vertical-align:middle">Traceroute-Dest.:</td><td><input style="right:10px" id="bmktracerouteip" name="bmktracerouteip" type="text" size="30" /></td></tr>
-    <tr><td style="vertical-align:middle">Traceroute6-Dest.:</td><td><input style="right:10px" id="bmktraceroute6ip" name="bmktraceroute6ip" type="text" size="70" /></td></tr>
-    <tr><td colspan="2"><div><span><input id="bmkadminlink"    name="bmkadminlink"    type="checkbox" />&nbsp;</span></div><div><span class="text" data-infotip='Include a Link to Loginpage on Statuspage. If disabled, your administrator will need to know the tcp-port to Admin-Interface'> Show link to admin login page</span></div></td></tr>
-    <tr><td colspan="2"><div><span><input id="bmknodedblookup" name="bmknodedblookup" type="checkbox" />&nbsp;</span></div><div><span class="text" data-infotip='Loads node information (ip to name/node lookup) from official map API  to show node count at routing table and node/device names in details'> Load node data for name lookup and route/node count</span></div></td></tr>
+    <tr><td style="vertical-align:middle">Traceroute-Dest.:</td><td><input style="right:10px" id="bmktracerouteip" name="bmktracerouteip" type="text" size="30" disabled /></td></tr>
+    <tr><td style="vertical-align:middle">Traceroute6-Dest.:</td><td><input style="right:10px" id="bmktraceroute6ip" name="bmktraceroute6ip" type="text" size="70" disabled /></td></tr>
+    <tr><td colspan="2"><div><span><input id="bmkadminlink"    name="bmkadminlink"    type="checkbox" disabled />&nbsp;</span></div><div><span class="text" data-infotip='Include a Link to Loginpage on Statuspage. If disabled, your administrator will need to know the tcp-port to Admin-Interface'> Show link to admin login page</span></div></td></tr>
+    <tr><td colspan="2"><div><span><input id="bmknodedblookup" name="bmknodedblookup" type="checkbox" disabled />&nbsp;</span></div><div><span class="text" data-infotip='Loads node information (ip to name/node lookup) from official map API  to show node count at routing table and node/device names in details'> Load node data for name lookup and route/node count</span></div></td></tr>
   </table>
 </fieldset>
 

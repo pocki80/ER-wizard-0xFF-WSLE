@@ -5463,30 +5463,30 @@ echo $output >> $log
     if [ -f "/config/custom/www/settings.inc" ]; then
         bmksettingfile="/config/custom/www/settings.inc"
         bmkinferfacelist=$(head -n 20 $bmksettingfile | grep interface_1100_list | grep -oE "'.*'" | awk -F"'" {'print $2;'})
-        bmktracerouteip=$(head -n 20 $bmksettingfile | grep traceroute_to | grep -oE "'.*'" | awk -F"'" {'print $2;'})
-        bmknodedblookupx=$(head -n 20 $bmksettingfile | grep get_nslookup_from_nodedb | grep -oE "=[0,1];" | awk {'gsub("=","",$1);gsub(";","",$1);gsub(" ","",$1); print $1;'})
-        bmkadminlinkx=$(head -n 20 $bmksettingfile | grep show_link_to_adminlogin | grep -oE "=[0,1];" | awk {'gsub("=","",$1);gsub(";","",$1);gsub(" ","",$1); print $1;'})
+        #bmktracerouteip=$(head -n 20 $bmksettingfile | grep traceroute_to | grep -oE "'.*'" | awk -F"'" {'print $2;'})
+        #bmknodedblookupx=$(head -n 20 $bmksettingfile | grep get_nslookup_from_nodedb | grep -oE "=[0,1];" | awk {'gsub("=","",$1);gsub(";","",$1);gsub(" ","",$1); print $1;'})
+        #bmkadminlinkx=$(head -n 20 $bmksettingfile | grep show_link_to_adminlogin | grep -oE "=[0,1];" | awk {'gsub("=","",$1);gsub(";","",$1);gsub(" ","",$1); print $1;'})
         
         bmkinferfacelistnew=$(jq -M -r '.bmkinferfacelist' $INPUT)
-        bmktracerouteipnew=$(jq -M -r '.bmktracerouteip' $INPUT)
-        bmknodedblookupxnew=$(jq -M -r '.bmknodedblookupx' $INPUT)
-        bmkadminlinkxnew=$(jq -M -r '.bmkadminlinkx' $INPUT)
+        #bmktracerouteipnew=$(jq -M -r '.bmktracerouteip' $INPUT)
+        #bmknodedblookupxnew=$(jq -M -r '.bmknodedblookupx' $INPUT)
+        #bmkadminlinkxnew=$(jq -M -r '.bmkadminlinkx' $INPUT)
         
-        [ "$bmkinferfacelist" ] || bmkinferfacelist="n/a"
-        [ "$bmktracerouteip" ] || bmktracerouteip="n/a"
-        bmksettings=",\"bmkinferfacelist\":\"$bmkinferfacelist\",\"bmktracerouteip\":\"$bmktracerouteip\",\"bmknodedblookup\":\"$bmknodedblookup\",\"bmkadminlink\":\"$bmkadminlink\""
-        [ "$bmknodedblookupx" -eq 1 ] && bmksettings=$bmksettings",\"bmknodedblookup\":\"on\""
-        [ "$bmkadminlinkx" -eq 1 ]    && bmksettings=$bmksettings",\"bmkadminlink\":\"on\""
+        [ "$bmkinferfacelist" ] || bmkinferfacelist="br0.1100"
+        #[ "$bmktracerouteip" ] || bmktracerouteip="n/a"
+        #[ "$bmknodedblookupx" -eq 1 ] && bmksettings=$bmksettings",\"bmknodedblookup\":\"on\""
+        #[ "$bmkadminlinkx" -eq 1 ]    && bmksettings=$bmksettings",\"bmkadminlink\":\"on\""
         #echo "changes for settings.inc recognized" >>$log
+        if [ "$bmkinferfacelist" ] && [ "$bmkinferfacelistnew" ] && [ "$bmkinferfacelist"!=="$bmkinferfacelistnew" ]; then
+            echo "changes for settings.inc recognized: new interface_list" >>$log
+            sed -i "s/interface_1100_list='"$bmkinferfacelist"'/interface_1100_list='"$bmkinferfacelistnew"'/g" $bmksettingfile 2>$log
+        fi
     else
         echo "settings.inc missing, will not change anything" >>$log
     fi
     
-    head -n 20 $bmksettingfile | grep interface_1100_list | grep -oE "'.*'" | awk
-    
     ### BMK Config
     ##########
-
 
     # for debugging purposes
     cp $INPUT /tmp/result.json
