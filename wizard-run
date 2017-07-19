@@ -4978,7 +4978,7 @@ esac
     if [ -f /config/letsencrypt/deploysetting.dat ] && [ "$(grep -i "deploycertificate=yes" /config/letsencrypt/deploysetting.dat | wc -l)" == "1" ]; then
         deployactive=',"deployactive":"on"'
     fi
-    PORT=$(grep -i port= /config/letsencrypt/dploysetting.dat 2>/dev/null | cut -d= -f2)
+    PORT=$(grep -i port= /config/letsencrypt/deploysetting.dat 2>/dev/null | cut -d= -f2)
     [ "$PORT" ] || PORT=22
     deployactive=$deployactive',"sshport":"'$PORT'"'
 
@@ -5134,7 +5134,7 @@ apply () {
 
     SSHPORT=$(jq -M -r '.sshport' $INPUT)
     [ "$SSHPORT" ] || SSHPORT=22
-    PORT=$(grep -i port= /config/letsencrypt/dploysetting.dat 2>/dev/null | cut -d= -f2)
+    PORT=$(grep -i port= /config/letsencrypt/deploysetting.dat 2>/dev/null | cut -d= -f2)
     [ "$PORT" ] || PORT=22
     if [ ! $SSHPORT -eq $PORT ]; then
         # remove current setting
