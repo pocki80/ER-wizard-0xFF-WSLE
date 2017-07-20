@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 # EdgeMAX Wizard "0xFF-BMK-Webstatus-LetsEncrypt" created 02/2017 by CPO/BMK for FunkFeuer.at
-# Version 20170719/bmk4.7
+# Version 20170720/bmk4.7
 # ^-- previous line is used frombmk-webstatus-package as version identification, dont remove "Version "
 # Shortform: 0xffwsle 0xFF-WSLE
 #
@@ -4415,8 +4415,10 @@ done
 # STEP 2 -> get list of local antennas
 # if multiple lan IPs 10.x.x.100-105/200 are found, try to find correct one looking to iptables/masquerade
 # sudo iptables -L POSTROUTING -n -t nat | grep -i masquerade | grep -E "10\..{3,7}\.0/24" | awk {'print $4'} | awk -F"/" {'print $1'}
-PORT=$(grep -i port= /config/letsencrypt/dploysetting.dat 2>/dev/null | cut -d= -f2)
+PORT=$(grep -i port= /config/letsencrypt/deploysetting.dat 2>/dev/null | cut -d= -f2)
 [ "$PORT" ] || PORT=22
+USER=$(grep -i user= /config/letsencrypt/deploysetting.dat 2>/dev/null | cut -d= -f2)
+[ "$USER" ] || USER="ubnt"
 LANSEGM=$(ip -4 addr | grep -oE "10\..{3,7}\.[12]0[012345]/.{1,2}" | head -n 1 | awk -F. {'print $1"."$2"."$3"."'})
 ANTENNEN=$(/usr/sbin/ubnt-discover | grep -E "P5B|NB5|N5B|P5C|N5C|N5N|AG5|B5N|LM5|AGW|TSW|L5C" | grep $LANSEGM)
 echo "${ANTENNEN[@]}"
@@ -4451,9 +4453,11 @@ rm -f /tmp/domain.key
 rm -f /tmp/signed.crt
 ENDSCRIPTCONTENT
 
+echo "User:"$USER", Port:"$PORT
 for IP in $(echo "${ANTENNEN[@]}" | awk {'print $3'}); do
   echo "Deploying ssh key to "$IP"..."
-  ssh -o "StrictHostKeyChecking=no" -o "UserKnownHostsFile=/dev/null" -p $PORT ubnt@$IP 'sh' </tmp/sshkeydeploy.sh
+  ssh -o "StrictHostKeyChecking=no" -o "UserKnownHostsFile=/dev/null" -p $PORT $USER@$IP 'sh' </tmp/sshkeydeploy.sh
+  echo "Result-Code: "$?
   echo "Closing connection   "$IP"..."
   echo ""
 done
@@ -4480,8 +4484,10 @@ if [ ! -f /root/.ssh/id_rsa ] && [ ! -f /root/.ssh/id_rsa.pub ]; then
   cp /config/letsencrypt/id_rsa.pub /root/.ssh/id_rsa.pub
 fi
 
-PORT=$(grep -i port= /config/letsencrypt/dploysetting.dat 2>/dev/null | cut -d= -f2)
+PORT=$(grep -i port= /config/letsencrypt/deploysetting.dat 2>/dev/null | cut -d= -f2)
 [ "$PORT" ] || PORT=22
+USER=$(grep -i user= /config/letsencrypt/deploysetting.dat 2>/dev/null | cut -d= -f2)
+[ "$USER" ] || USER="ubnt"
 LANSEGM=$(ip -4 addr | grep -oE "10\..{3,7}\.[12]0[012345]/.{1,2}" | head -n 1 | awk -F. {'print $1"."$2"."$3"."'})
 ANTENNEN=$(/usr/sbin/ubnt-discover | grep -E "P5B|NB5|N5B|P5C|N5C|N5N|AG5|B5N|LM5|AGW|TSW|L5C" | grep $LANSEGM)
 echo "${ANTENNEN[@]}"
@@ -4519,9 +4525,11 @@ rm -f /tmp/domain.key 2>/dev/null
 rm -f /tmp/server.crt 2>/dev/null
 ENDSCRIPTCONTENT
 
+echo "User:"$USER", Port:"$PORT
 for IP in $(echo "${ANTENNEN[@]}" | awk {'print $3'}); do
   echo "Deploying server cert to "$IP"..."
-  ssh -o "StrictHostKeyChecking=no" -o "UserKnownHostsFile=/dev/null" -o "PasswordAuthentication=no" -p $PORT ubnt@$IP 'sh' </tmp/sshcrtdeploy.sh
+  ssh -o "StrictHostKeyChecking=no" -o "UserKnownHostsFile=/dev/null" -o "PasswordAuthentication=no" -p $PORT $USER@$IP 'sh' </tmp/sshcrtdeploy.sh
+  echo "Result-Code: "$?
   echo "Closing connection   "$IP"..."
   echo ""
 done
@@ -4983,6 +4991,9 @@ esac
     PORT=$(grep -i port= /config/letsencrypt/deploysetting.dat 2>/dev/null | cut -d= -f2)
     [ "$PORT" ] || PORT=22
     deployactive=$deployactive',"sshport":"'$PORT'"'
+    USER=$(grep -i user= /config/letsencrypt/deploysetting.dat 2>/dev/null | cut -d= -f2)
+    [ "$USER" ] || USER="ubnt"
+    deployactive=$deployactive',"sshuser":"'$USER'"'
 
     if [ -f /config/letsencrypt/id_rsa.pub ]; then
         routerrsakey=$(cat /config/letsencrypt/id_rsa.pub)
@@ -5148,6 +5159,22 @@ apply () {
         fi
         # add new setting
         echo "port="$SSHPORT >>/config/letsencrypt/deploysetting.dat
+    fi
+
+    SSHUSER=$(jq -M -r '.sshuser' $INPUT)
+    [ "$SSHUSER" ] || SSHUSER="ubnt"
+    USER=$(grep -i user= /config/letsencrypt/deploysetting.dat 2>/dev/null | cut -d= -f2)
+    [ "$USER" ] || USER="ubnt"
+    if [ "$SSHUSER"!=="$USER" ]; then
+        # remove current setting
+        if [ -f /config/letsencrypt/deploysetting.dat ] &&
+           [ "$(grep -i "user=" /config/letsencrypt/deploysetting.dat |wc -l)" == "1" ]; then
+            linenumber=$(grep -ni "user=" /config/letsencrypt/deploysetting.dat | awk -F: {'print $1'})
+            sed -i $linenumber'd' /config/letsencrypt/deploysetting.dat 2>>$log
+            sed -i '/^$/d' /config/letsencrypt/deploysetting.dat 2>>$log
+        fi
+        # add new setting
+        echo "user="$SSHUSER >>/config/letsencrypt/deploysetting.dat
     fi
 
     restartcustomenabled=$(jq -M -r '.restartcustomenabled' $INPUT)
