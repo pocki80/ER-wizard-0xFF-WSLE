@@ -5506,7 +5506,7 @@ echo $output >> $log
         #echo "changes for settings.inc recognized" >>$log
         if [ "$bmkinferfacelist" ] && [ "$bmkinferfacelistnew" ] && [ "$bmkinferfacelist"!=="$bmkinferfacelistnew" ]; then
             echo "changes for settings.inc recognized: new interface_list" >>$log
-            sed -i "s/interface_1100_list='"$bmkinferfacelist"'/interface_1100_list='"$bmkinferfacelistnew"'/g" $bmksettingfile 2>$log
+            sed -i "s/interface_1100_list='"$bmkinferfacelist"'/interface_1100_list='"$bmkinferfacelistnew"'/g" $bmksettingfile 2>>$log
         fi
     else
         echo "settings.inc missing, will not change anything" >>$log
