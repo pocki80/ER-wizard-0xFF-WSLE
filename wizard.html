@@ -2,7 +2,7 @@
 
 EdgeMAX Wizard "0xFF-BMK-Webstatus-LetsEncrypt" created 02/2017 by CPO/BMK for FunkFeuer.at
 Works on EdgeRouter and EdgeRouter X / X-SFP (system version 1.9.0+)
-versioninfo=201707201
+versioninfo=201707240
 ^-- use version identifier as number: YYYYMMDDX whereas X can be intraday-version
 autoupdate=201707201
 ^-- set autoupdate the same version identifier to allow autoupdates
@@ -14,7 +14,7 @@ autoupdate=201707201
 </div>
 <legend style="position:absolute;right:0px;padding:5px;">
     <center>EdgeMAX Wizard "0xFF-BMK-Webstatus-LetsEncrypt"<br>created 02/2017 by CPO/BMK for FunkFeuer.at<br>
-    Version 20170720/bmk4.7</center>
+    Version 20170724/bmk4.7</center>
 </legend>
 <div style="padding:15px;border: 1px solid lightgray;width:648px">
   <table border="0">
@@ -35,9 +35,9 @@ autoupdate=201707201
        Several changes are applied with restarting the lighttpd. This will result in the error message "apply failed". <b>Reload the full WebUI after this!</b><br>
        &nbsp;<br>
     </td></tr>
-    <tr><td style="vertical-align:middle">Current DNS</td><td><input style="right:10px" id="currentfqdn" name="currentfqdn" type="text" size="40" disabled /><input style="right:10px" id="currentdet" name="currentdet" type="text" size="15" disabled /></td></tr>
-    <tr><td style="vertical-align:middle">Domain-Key FQDN</td><td><input style="right:10px" id="domainfqdn" name="domainfqdn" type="text" size="40" disabled /></td></tr>
-    <tr><td style="vertical-align:middle">Certificate FQDN</td><td><input style="right:10px" id="certfqdn" name="certfqdn" type="text" size="40" disabled /> </td></tr>
+    <tr><td style="vertical-align:middle">Current DNS</td><td><input style="right:10px" id="currentfqdn" name="currentfqdn" type="text" size="70" disabled /></td></tr>
+    <tr><td style="vertical-align:middle">Domain-Key FQDN</td><td><input style="right:10px" id="domainfqdn" name="domainfqdn" type="text" size="70" disabled /></td></tr>
+    <tr><td style="vertical-align:middle">Certificate FQDN</td><td><input style="right:10px" id="certfqdn" name="certfqdn" type="text" size="70" disabled /> </td></tr>
     <tr><td style="vertical-align:middle">Certificate Validity</td><td>
                                           <input style="right:10px" id="certfrom" name="certfrom" type="text" size="20" disabled /> 
                                        to <input style="right:10px" id="certuntil" name="certuntil" type="text" size="20" disabled /> 
@@ -238,7 +238,6 @@ function colors() {
     //document.getElementById('orighttpsport').disabled = true;
     //document.getElementById('customhttpport').disabled = true;
     //document.getElementById('customhttpsport').disabled = true;
-    document.getElementById('currentdet').disabled = true;
     
     disable_group('cefiles');
     disable_group('lefiles');
