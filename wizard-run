@@ -1,13 +1,13 @@
 #!/bin/bash
 #
 # EdgeMAX Wizard "0xFF-BMK-Webstatus-LetsEncrypt" created 02/2017 by CPO/BMK for FunkFeuer.at
-# Version 20170724/bmk4.7
+# Version 20170801/bmk4.7
 # ^-- previous line is used frombmk-webstatus-package as version identification, dont remove "Version "
 # Shortform: 0xffwsle 0xFF-WSLE
 #
 # Github repository: https://github.com/pocki80/ER-wizard-0xFF-WSLE
 #
-# Works on all EdgeRouter and EdgePoint Devices (system version 1.7.0+)
+# Works on all EdgeRouter and EdgePoint Devices (system version 1.9.0+)
 #
 # what it does:
 # -) on installation of wizard, extracts and installs BMK-Webstatus-LE package:
@@ -16,7 +16,7 @@
 # -) shows status of certificates, package installations
 # -) trigger FQDN certificate register and/or renewal on apply()
 # -) deploys certificate to local AirOS devices when authorized by ssh-public-key
-# -) restart webserices on apply()
+# -) restart webservices daily and if needed on apply()
 #
 # known bugs/limitations:
 # -) not all files from older versions are checked: bmk-webstatus-package will clean them on install anyway
@@ -26,7 +26,7 @@
 # open tasks
 # -) fill up file-checks and package status for older versions
 # -) manage settings for BMK-Webstatus cgi-bin-status.php to configure:
-#    traceroute-destination, show_link_to_adminlogin, get_nslookup_from_nodedb, interface_1100_list
+#    traceroute-destination, show_link_to_adminlogin, get_nslookup_from_nodedb
 #
 
 ACTION=$1
@@ -4397,7 +4397,7 @@ if [ ! -f /root/.ssh/id_rsa ] && [ ! -f /root/.ssh/id_rsa.pub ]; then
   cp /config/letsencrypt/id_rsa /root/.ssh/id_rsa
   cp /config/letsencrypt/id_rsa.pub /root/.ssh/id_rsa.pub
 fi
-# fÃ¼r alle admin-user bereitstellen 
+# für alle admin-user bereitstellen 
 userlist=$(grep -E "^        user |^            level " /config/config.boot | sed 'N;s/\n/ /' | grep "level admin" | awk {'print $2'})
 #userlist="ubnt"
 for user in $userlist; do
@@ -4456,7 +4456,79 @@ ENDSCRIPTCONTENT
 echo "User:"$USER", Port:"$PORT
 for IP in $(echo "${ANTENNEN[@]}" | awk {'print $3'}); do
   echo "Deploying ssh key to "$IP"..."
-  ssh -o "StrictHostKeyChecking=no" -o "UserKnownHostsFile=/dev/null" -p $PORT $USER@$IP 'sh' </tmp/sshkeydeploy.sh
+  ssh -o "StrictHostKeyChecking=no" -o "UserKnownHostsFile=/dev/null" -o "LogLevel=error" -p $PORT $USER@$IP 'sh' </tmp/sshkeydeploy.sh
+  echo "Result-Code: "$?
+  echo "Closing connection   "$IP"..."
+  echo ""
+done
+rm -f /tmp/sshkeydeploy.sh
+
+# STEP 3 -> EDGEROUTER
+# if multiple lan IPs 10.x.x.100-105/200 are found, try to find correct one looking to iptables/masquerade
+# sudo iptables -L POSTROUTING -n -t nat | grep -i masquerade | grep -E "10\..{3,7}\.0/24" | awk {'print $4'} | awk -F"/" {'print $1'}
+PORT=$(grep -i port_er= /config/letsencrypt/deploysetting.dat 2>/dev/null | cut -d= -f2)
+[ "$PORT" ] || PORT=10
+USER=$(grep -i user_er= /config/letsencrypt/deploysetting.dat 2>/dev/null | cut -d= -f2)
+[ "$USER" ] || USER="ubnt"
+LOCALHOST=$(ip -4 addr | grep -oE "10\..{3,7}\.[12]0[012345]/.{1,2}" | head -n 1 | cut -d/ -f1)
+ANTENNEN=$(/usr/sbin/ubnt-discover | grep -E "ER-X|EP-R6" | grep $LANSEGM | grep -v $LOCALHOST)
+echo "${ANTENNEN[@]}"
+
+#prepare deploy-sshkey script
+echo USER=$USER >/tmp/sshkeydeploy.sh
+echo HOSTNAME=$(cat /config/letsencrypt/id_rsa.pub | awk {'print $3'}) >>/tmp/sshkeydeploy.sh
+echo KEY=$(cat /config/letsencrypt/id_rsa.pub | awk {'print $2'}) >>/tmp/sshkeydeploy.sh
+cat >>/tmp/sshkeydeploy.sh <<'ENDSCRIPTCONTENT'
+SAVED_KEY=$(grep -A10 "        user $USER" /config/config.boot | grep -E -A2 "public-keys $HOSTNAME" | grep "key " | awk '{print $2}')
+if [ "$SAVED_KEY" == "" ]; then
+  echo "key will be deployed"
+  create=1
+else
+  if [ "$(echo $SAVED_KEY | md5sum | awk {'print $1'})" != "$(echo $KEY | md5sum | awk {'print $1'})" ]; then
+    echo "key will be renewed"
+    delete=1
+    create=1
+  fi
+fi
+
+if [ "$create" ]; then
+cmd="/opt/vyatta/sbin/vyatta-cfg-cmd-wrapper"
+tfile=$(mktemp)
+(
+$cmd begin
+ret=0
+if [ "$delete" ] && [ $ret == 0 ]; then
+  $cmd delete system login user $USER authentication public-keys $HOSTNAME || ret=1
+fi
+if [ "$create" ] && [ $ret == 0 ]; then
+  $cmd set system login user $USER authentication public-keys $HOSTNAME key $KEY  || ret=1
+set system login user ubnt authentication public-keys hochmayer-router type ssh-rsa
+fi
+if [ "$create" ] && [ $ret == 0 ]; then
+  $cmd set system login user $USER authentication public-keys $HOSTNAME type ssh-rsa || ret=1
+fi
+if [ $ret == 0 ]; then
+  $cmd commit || ret=1
+fi
+if [ $ret == 0 ]; then
+  $cmd save || ret=1
+fi
+$cmd end
+exit $ret
+) >$tfile 2>&1
+ret=$?
+output=$(cat $tfile)
+rm -f $tfile
+echo $output
+else
+echo "key was ok"
+fi
+ENDSCRIPTCONTENT
+
+echo "User:"$USER", Port:"$PORT
+for IP in $(echo "${ANTENNEN[@]}" | awk {'print $3'}); do
+  echo "Deploying ssh key to "$IP"..."
+  ssh -o "StrictHostKeyChecking=no" -o "UserKnownHostsFile=/dev/null" -o "LogLevel=error" -p $PORT $USER@$IP 'sh' </tmp/sshkeydeploy.sh
   echo "Result-Code: "$?
   echo "Closing connection   "$IP"..."
   echo ""
@@ -4528,7 +4600,44 @@ ENDSCRIPTCONTENT
 echo "User:"$USER", Port:"$PORT
 for IP in $(echo "${ANTENNEN[@]}" | awk {'print $3'}); do
   echo "Deploying server cert to "$IP"..."
-  ssh -o "StrictHostKeyChecking=no" -o "UserKnownHostsFile=/dev/null" -o "PasswordAuthentication=no" -p $PORT $USER@$IP 'sh' </tmp/sshcrtdeploy.sh
+  ssh -o "StrictHostKeyChecking=no" -o "UserKnownHostsFile=/dev/null" -o "PasswordAuthentication=no" -o "LogLevel=error" -p $PORT $USER@$IP 'sh' </tmp/sshcrtdeploy.sh
+  echo "Result-Code: "$?
+  echo "Closing connection   "$IP"..."
+  echo ""
+done
+rm -f /tmp/sshcrtdeploy.sh
+
+# STEP 3 -> EDGEROUTER
+# if multiple lan IPs 10.x.x.100-105/200 are found, try to find correct one looking to iptables/masquerade
+# sudo iptables -L POSTROUTING -n -t nat | grep -i masquerade | grep -E "10\..{3,7}\.0/24" | awk {'print $4'} | awk -F"/" {'print $1'}
+PORT=$(grep -i port_er= /config/letsencrypt/deploysetting.dat 2>/dev/null | cut -d= -f2)
+[ "$PORT" ] || PORT=10
+USER=$(grep -i user_er= /config/letsencrypt/deploysetting.dat 2>/dev/null | cut -d= -f2)
+[ "$USER" ] || USER="ubnt"
+LOCALHOST=$(ip -4 addr | grep -oE "10\..{3,7}\.[12]0[012345]/.{1,2}" | head -n 1 | cut -d/ -f1)
+ANTENNEN=$(/usr/sbin/ubnt-discover | grep -E "ER-X|EP-R6" | grep $LANSEGM | grep -v $LOCALHOST)
+echo "${ANTENNEN[@]}"
+
+echo 'echo "'"$(cat /etc/lighttpd/server.pem)"'" >/tmp/server.pem'  >/tmp/sshcrtdeploy.sh
+cat >>/tmp/sshcrtdeploy.sh <<'ENDSCRIPTCONTENT'
+if [ $(ip -4 a | grep global | awk '{print $2}' | cut -d/ -f1 | grep -vEc "10\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}|192\.168\.[0-9]{1,3}\.[0-9]{1,3}") -eq 0 ] &&
+   [ ! -f /config/letsencrypt/letsrenew.sh ] &&
+   [ $(sudo md5sum /tmp/server.pem | awk {'print $1'}) != $(sudo md5sum /etc/lighttpd/server.pem | awk {'print $1'}) ]; then
+  echo "replacing server.pem..."
+  sudo /sbin/start-stop-daemon --stop --pidfile /var/run/lighttpd_custom.pid
+  sudo /sbin/start-stop-daemon --stop --pidfile /var/run/lighttpd.pid
+  sudo cp /tmp/server.pem /etc/lighttpd/server.pem
+  sudo chmod 600 /etc/lighttpd/server.pem
+  sudo /sbin/start-stop-daemon --start --quiet --pidfile /var/run/lighttpd.pid        --exec /usr/sbin/lighttpd -- -f /etc/lighttpd/lighttpd.conf
+  sudo /sbin/start-stop-daemon --start --quiet --pidfile /var/run/lighttpd_custom.pid --exec /usr/sbin/lighttpd -- -f /config/custom/lighttpd/lighttpd_custom.conf
+fi
+rm -f /tmp/server.pem 2>/dev/null
+ENDSCRIPTCONTENT
+
+echo "User:"$USER", Port:"$PORT
+for IP in $(echo "${ANTENNEN[@]}" | awk {'print $3'}); do
+  echo "Deploying server cert to "$IP"..."
+  ssh -o "StrictHostKeyChecking=no" -o "UserKnownHostsFile=/dev/null" -o "PasswordAuthentication=no" -o "LogLevel=error" -p $PORT $USER@$IP 'sh' </tmp/sshcrtdeploy.sh
   echo "Result-Code: "$?
   echo "Closing connection   "$IP"..."
   echo ""
@@ -4846,19 +4955,7 @@ esac
         PUBLICIP=$(echo "$LIST" | sed -e :a -e '$!N; s/\n/,/; ta')
         PUBLICIP=$(echo $PUBLICIP | tr , "\n" | sort | tr "\n" , | awk '{gsub(".$","");print $1}')
     fi
-    #if [ ! -f "/config/custom/bin/ip2dns" ]; then
-    #    DETAIL="ip2dns missing"
-    #elif [ $(ps aux | grep olsr | grep -v grep | wc -l) -eq 0 ]; then
-    #    # it works only if txtinfo Plugin is activated in the OLSR Wizard!
-    #    PUBLICIP=$(echo $(curl -s -o- http://127.0.0.1:2006/interfaces | head -n3 | tail -n1 | awk {'print $5'}) | /config/custom/bin/ip2dns | awk {'print $2'} | sed -e s/dns.//)
-    #    DETAIL="from olsrd/txtinfo"
-    #else
-    #    # if OLSR is not activated or not used - we get the "public" IP from the default route iface
-    #    PUBLICIP=$(echo $(/sbin/ifconfig $(ip r | grep default | tail -n1 | awk {'print $5'}) | head -n2 | tail -n1 | awk {'print $2'} | sed -e s/addr://) | /config/custom/bin/ip2dns | awk {'print $2'} | sed -e s/dns.//)
-    #    DETAIL="from ifconfig/def.route"
-    #fi
     [ "$PUBLICIP" ] && ledetails=',"currentfqdn":"'$PUBLICIP'"' || ledetails=',"currentfqdn":"not available"'
-    #ledetails=$ledetails',"currentdet":"'$DETAIL'"'
 
     #get current register from domain.csr
     CURRENT=$(openssl req -in /config/letsencrypt/domain.csr -noout -text | grep Subject | grep CN= | awk -F'=' {'print $2'})
@@ -4866,9 +4963,6 @@ esac
         CURRENT=$(openssl req -in /config/letsencrypt/domain.csr -noout -text | grep -A 1 "X509v3 Subject Alternative Name" | tail -n 1 | sed -e 's/ //g' | sed -e 's/DNS://g')
         CURRENT=$(echo $CURRENT | tr , "\n" | sort | tr "\n" , | awk '{gsub(".$","");print $1}')
     fi
-    #if [ -f "/config/letsencrypt/domain.csr" ] && [ ! $(stat -c %s /config/letsencrypt/domain.csr) -eq 0 ]; then
-    #    CURRENT=$(openssl req -in /config/letsencrypt/domain.csr -noout -text | grep Subject | grep CN= | awk -F'=' {'print $2'})
-    #fi
     [ "$CURRENT" ] && ledetails=$ledetails',"domainfqdn":"'$CURRENT'"' || ledetails=$ledetails',"domainfqdn":"not available"'
     
     #certfqdn certfrom certuntil
@@ -5023,6 +5117,12 @@ esac
     [ "$USER" ] || USER="ubnt"
     deployactive=$deployactive',"sshuser":"'$USER'"'
 
+    PORTER=$(grep -i port_er= /config/letsencrypt/deploysetting.dat 2>/dev/null | cut -d= -f2)
+    [ "$PORTER" ] || PORTER=10
+    deployactive=$deployactive',"ssherport":"'$PORTER'"'
+    USERER=$(grep -i user_er= /config/letsencrypt/deploysetting.dat 2>/dev/null | cut -d= -f2)
+    [ "$USERER" ] || USERER="ubnt"
+    deployactive=$deployactive',"ssheruser":"'$USERER'"'
     if [ -f /config/letsencrypt/id_rsa.pub ]; then
         routerrsakey=$(cat /config/letsencrypt/id_rsa.pub)
         routername=$(hostname)
@@ -5205,6 +5305,38 @@ apply () {
         echo "user="$SSHUSER >>/config/letsencrypt/deploysetting.dat
     fi
 
+    SSHERPORT=$(jq -M -r '.ssherport' $INPUT)
+    [ "$SSHERPORT" ] || SSHERPORT=10
+    PORTER=$(grep -i port_er= /config/letsencrypt/deploysetting.dat 2>/dev/null | cut -d= -f2)
+    [ "$PORTER" ] || PORTER=10
+    if [ ! $SSHERPORT -eq $PORTER ]; then
+        # remove current setting
+        if [ -f /config/letsencrypt/deploysetting.dat ] &&
+           [ "$(grep -i "port_er=" /config/letsencrypt/deploysetting.dat |wc -l)" == "1" ]; then
+            linenumber=$(grep -ni "port_er=" /config/letsencrypt/deploysetting.dat | awk -F: {'print $1'})
+            sed -i $linenumber'd' /config/letsencrypt/deploysetting.dat 2>>$log
+            sed -i '/^$/d' /config/letsencrypt/deploysetting.dat 2>>$log
+        fi
+        # add new setting
+        echo "port_er="$SSHERPORT >>/config/letsencrypt/deploysetting.dat
+    fi
+
+    SSHERUSER=$(jq -M -r '.ssheruser' $INPUT)
+    [ "$SSHERUSER" ] || SSHERUSER="ubnt"
+    USERER=$(grep -i user_er= /config/letsencrypt/deploysetting.dat 2>/dev/null | cut -d= -f2)
+    [ "$USERER" ] || USERER="ubnt"
+    if [ "$SSHERUSER"!=="$USERER" ]; then
+        # remove current setting
+        if [ -f /config/letsencrypt/deploysetting.dat ] &&
+           [ "$(grep -i "user_er=" /config/letsencrypt/deploysetting.dat |wc -l)" == "1" ]; then
+            linenumber=$(grep -ni "user_er=" /config/letsencrypt/deploysetting.dat | awk -F: {'print $1'})
+            sed -i $linenumber'd' /config/letsencrypt/deploysetting.dat 2>>$log
+            sed -i '/^$/d' /config/letsencrypt/deploysetting.dat 2>>$log
+        fi
+        # add new setting
+        echo "user_er="$SSHERUSER >>/config/letsencrypt/deploysetting.dat
+    fi
+
     restartcustomenabled=$(jq -M -r '.restartcustomenabled' $INPUT)
     restartorigenabled=$(jq -M -r '.restartorigenabled' $INPUT)
     registercert=$(jq -M -r '.registercert' $INPUT)
@@ -5224,16 +5356,6 @@ apply () {
             echo "error: offline, missing or empty files, or challenge-directory!" >> $log
         else
             echo "Retrieving IP and FQDN..." >> $log
-            # read activated PublicIP from OLSR Daemon (should be optimized in the future)
-            #if [ $(ps aux | grep olsr | grep -v grep | wc -l) -eq 0 ]; then
-                # it works only if txtinfo Plugin is activated in the OLSR Wizard!
-            #    PUBLICIP=$(echo $(curl -s -o- http://127.0.0.1:2006/interfaces | head -n3 | tail -n1 | awk {'print $5'}) | /config/custom/bin/ip2dns | awk {'print $2'} | sed -e s/dns.//)
-            #else
-            #    # if OLSR is not activated or not used - we get the "public" IP from the default route iface
-            #    PUBLICIP=$(echo $(/sbin/ifconfig $(ip r | grep default | tail -n1 | awk {'print $5'}) | head -n2 | tail -n1 | awk {'print $2'} | sed -e s/addr://) | /config/custom/bin/ip2dns | awk {'print $2'} | sed -e s/dns.//)
-            #fi
-            #echo "...lookup result: ,"$PUBLICIP"," >> $log
-
             # get all local FQDNs from global ip addresses
             LIST=""
             for i in $(ip -4 a | grep global | awk '{print $2}' | cut -d/ -f1 | grep -vE "10\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}|192\.168\.[0-9]{1,3}\.[0-9]{1,3}"); do
@@ -5247,7 +5369,6 @@ apply () {
                 [ "$dn" ] && [ $(echo "$LIST" | grep $dn -c) -eq 0 ] && LIST=$(echo -e "$LIST"'\n'$dn)
             done
             LISTCOUNT=$(echo "$LIST" | wc -l)
-            echo "...lookup result ($LISTCOUNT): "$LIST >> $log
 
             CURRENT=$(openssl req -in /config/letsencrypt/domain.csr -noout -text | grep Subject | grep CN= | awk -F'=' {'print $2'})
             if [ ! "$CURRENT" ]; then 
@@ -5265,15 +5386,18 @@ apply () {
                 PUBLICIP=$(echo "DNS:"$(echo "$LIST" | sed -e :a -e '$!N; s/\n/,DNS\:/; ta'))
                 PUBLICIP=$(echo $PUBLICIP | tr , "\n" | sort | tr "\n" , | awk '{gsub(".$","");print $1}')
             fi
+            echo "...lookup result ($LISTCOUNT):" >>$log
+            echo "--public: "$PUBLICIP >>$log
+            echo "--currnt: "$CURRENT >>$log
 
             if [ $LISTCOUNT -eq 0 ]; then
-                echo "FQDN not known!" >> $log
+                echo -n "" >> $log
             elif [ $LISTCOUNT -eq 1 ]; then
+                # one single FQDN
                 # if domain.csr exists, check the FQDN it is registered for
                 if [ -f "/config/letsencrypt/domain.csr" ] && [ ! $(stat -c %s /config/letsencrypt/domain.csr) -eq 0 ] && [ "$PUBLICIP" ]; then
-                    echo "Existing domain.csr is for FQDN: ,"$CURRENT"," >> $log
                     if [ "$CURRENT" != "$PUBLICIP" ] && [ "$CURRENT" ]; then
-                        echo "FQDN changed, creating new domain-csr..." >> $log
+                        echo "FQDN changed, creating new single-domain-csr..." >> $log
                         openssl req -new -sha256 -key /config/letsencrypt/domain.key -subj "/CN=$PUBLICIP" | tee /config/letsencrypt/domain.csr >> $log
                     elif [ ! "$CURRENT" ]; then
                         echo "Error checking current csr-file" >> $log
@@ -5282,16 +5406,15 @@ apply () {
                     fi
                 elif [ "$PUBLICIP" ]; then
                     # correctly register csr file
-                    echo "Creating domain-csr..." >> $log
+                    echo "Creating a single-domain-csr..." >> $log
                     openssl req -new -sha256 -key /config/letsencrypt/domain.key -subj "/CN=$PUBLICIP" | tee /config/letsencrypt/domain.csr >> $log
                 fi
             else
                 # multiple FQDNs
                 # if domain.csr exists, check the FQDN it is registered for
                 if [ -f "/config/letsencrypt/domain.csr" ] && [ ! $(stat -c %s /config/letsencrypt/domain.csr) -eq 0 ] && [ "$PUBLICIP" ]; then
-                    echo "Existing domain.csr is for FQDN: ,"$CURRENT"," >> $log
                     if [ "$CURRENT" != "$PUBLICIP" ] && [ "$CURRENT" ]; then
-                        echo "FQDN changed, creating new domain-csr..." >> $log
+                        echo "FQDN changed, creating new multi-domain-csr..." >> $log
                         cat /etc/ssl/openssl.cnf >/tmp/openssl.tmp
                         printf "[SAN]\nsubjectAltName="$PUBLICIP >>/tmp/openssl.tmp
                         openssl req -new -sha256 -key /config/letsencrypt/domain.key -subj "/" -reqexts SAN -config /tmp/openssl.tmp >/config/letsencrypt/domain.csr
@@ -5303,7 +5426,7 @@ apply () {
                     fi
                 elif [ "$PUBLICIP" ]; then
                     # correctly register csr file
-                    echo "Creating domain-csr..." >> $log
+                    echo "Creating a multi-domain-csr..." >> $log
                     cat /etc/ssl/openssl.cnf >/tmp/openssl.tmp
                     printf "[SAN]\nsubjectAltName="$PUBLICIP >>/tmp/openssl.tmp
                     openssl req -new -sha256 -key /config/letsencrypt/domain.key -subj "/" -reqexts SAN -config /tmp/openssl.tmp >/config/letsencrypt/domain.csr
@@ -5312,10 +5435,14 @@ apply () {
             fi
 
             # Run letsrenew.sh file for initial connect and/or renewal, doesn't matter
-            echo "Starting registration/renewal procedure..." >> $log
-            bash /config/letsencrypt/letsrenew.sh >> $log
-            echo "Done!" >> $log
-            restartcustomenabled="on"
+            if [ "$PUBLICIP" ]; then
+                echo "Starting registration/renewal procedure..." >> $log
+                bash /config/letsencrypt/letsrenew.sh >> $log
+                echo "Done!" >> $log
+                restartcustomenabled="on"
+            else
+                echo "No public FQDN recognized, renewal will be skipped" >> $log
+            fi
         fi
     fi
     ### End registration process

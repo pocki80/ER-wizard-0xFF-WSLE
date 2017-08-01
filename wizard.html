@@ -2,9 +2,9 @@
 
 EdgeMAX Wizard "0xFF-BMK-Webstatus-LetsEncrypt" created 02/2017 by CPO/BMK for FunkFeuer.at
 Works on EdgeRouter and EdgeRouter X / X-SFP (system version 1.9.0+)
-versioninfo=201707240
+versioninfo=201708010
 ^-- use version identifier as number: YYYYMMDDX whereas X can be intraday-version
-autoupdate=201707201
+autoupdate=201708010
 ^-- set autoupdate the same version identifier to allow autoupdates
 
 
@@ -14,7 +14,7 @@ autoupdate=201707201
 </div>
 <legend style="position:absolute;right:0px;padding:5px;">
     <center>EdgeMAX Wizard "0xFF-BMK-Webstatus-LetsEncrypt"<br>created 02/2017 by CPO/BMK for FunkFeuer.at<br>
-    Version 20170724/bmk4.7</center>
+    Version 20170801/bmk4.7</center>
 </legend>
 <div style="padding:15px;border: 1px solid lightgray;width:648px">
   <table border="0">
@@ -29,7 +29,7 @@ autoupdate=201707201
     </td></tr>
     <tr><td style="vertical-align:middle">Custom-Server-Ports:</td><td>
        <input style="right:10px" id="customhttpport"  name="customhttpport"  type="number" size="6" /> 
-       <input style="right:10px" id="customhttpsport" name="customhttpsport" type="number" size="6" /> (Cert-Check!!)
+       <input style="right:10px" id="customhttpsport" name="customhttpsport" type="number" size="6" />
     </td></tr>
     <tr><td style="vertical-align:middle" colspan=2>
        Several changes are applied with restarting the lighttpd. This will result in the error message "apply failed". <b>Reload the full WebUI after this!</b><br>
@@ -44,6 +44,8 @@ autoupdate=201707201
                                           <input style="right:10px" id="certexpire" name="certexpire" type="text" size="15" disabled /> </td></tr>
     <tr><td style="vertical-align:middle">SSH-Port for AirOS:</td>  <td><input style="right:10px" id="sshport" name="sshport" type="number" size="6" /></td></tr>
     <tr><td style="vertical-align:middle">SSH-User for AirOS:</td>  <td><input style="right:10px" id="sshuser" name="sshuser" type="text" size="20" /></td></tr>
+    <tr><td style="vertical-align:middle">SSH-Port EdgeOS:</td>  <td><input style="right:10px" id="ssherport" name="ssherport" type="number" size="6" /></td></tr>
+    <tr><td style="vertical-align:middle">SSH-User EdgeOS:</td>  <td><input style="right:10px" id="ssheruser" name="ssheruser" type="text" size="20" /></td></tr>
   </table>
 </div>
 
