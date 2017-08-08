@@ -4463,7 +4463,7 @@ elif [ $(ip -4 addr | grep -coE "10\..{3,7}\.[12]0[012345]/.{1,2}") \> 1 ]; then
     LANSEGM=$(ip -4 addr | grep -oE "10\..{3,7}\.[12]0[012345]/.{1,2}" | tail -n 1 | awk -F. {'print $1"."$2"."$3"."'})
   fi
 fi
-ANTENNEN=$(/usr/sbin/ubnt-discover | grep -E "P5B|NB5|N5B|P5C|N5C|N5N|AG5|B5N|LM5|AGW|TSW|L5C" | grep $LANSEGM)
+ANTENNEN=$(/usr/sbin/ubnt-discover | grep -E "P5B|NB5|N5B|P5C|N5C|N5N|AG5|B5N|LM5|AGW|TSW|L5C|LB5" | grep $LANSEGM)
 echo "${ANTENNEN[@]}"
 
 #prepare deploy-sshkey script
@@ -4513,7 +4513,7 @@ PORT=$(grep -i port_er= /config/letsencrypt/deploysetting.dat 2>/dev/null | cut 
 [ "$PORT" ] || PORT=10
 USER=$(grep -i user_er= /config/letsencrypt/deploysetting.dat 2>/dev/null | cut -d= -f2)
 [ "$USER" ] || USER="ubnt"
-LOCALHOST=$(ip -4 addr | grep -oE "10\..{3,7}\.[12]0[012345]/.{1,2}" | head -n 1 | cut -d/ -f1)
+LOCALHOST=$(ip -4 addr | grep -oE "$LANSEGM[12]0[012345]/.{1,2}" | head -n 1 | cut -d/ -f1)
 ANTENNEN=$(/usr/sbin/ubnt-discover | grep -E "ER-X|EP-R6" | grep $LANSEGM | grep -v $LOCALHOST)
 echo "${ANTENNEN[@]}"
 
@@ -4622,7 +4622,7 @@ elif [ $(ip -4 addr | grep -coE "10\..{3,7}\.[12]0[012345]/.{1,2}") \> 1 ]; then
     LANSEGM=$(ip -4 addr | grep -oE "10\..{3,7}\.[12]0[012345]/.{1,2}" | tail -n 1 | awk -F. {'print $1"."$2"."$3"."'})
   fi
 fi
-ANTENNEN=$(/usr/sbin/ubnt-discover | grep -E "P5B|NB5|N5B|P5C|N5C|N5N|AG5|B5N|LM5|AGW|TSW|L5C" | grep $LANSEGM)
+ANTENNEN=$(/usr/sbin/ubnt-discover | grep -E "P5B|NB5|N5B|P5C|N5C|N5N|AG5|B5N|LM5|AGW|TSW|L5C|LB5" | grep $LANSEGM)
 echo "${ANTENNEN[@]}"
 
 echo 'echo "'"$(cat /config/letsencrypt/domain.key)"'" >/tmp/domain.key'  >/tmp/sshcrtdeploy.sh
@@ -4675,7 +4675,7 @@ PORT=$(grep -i port_er= /config/letsencrypt/deploysetting.dat 2>/dev/null | cut 
 [ "$PORT" ] || PORT=10
 USER=$(grep -i user_er= /config/letsencrypt/deploysetting.dat 2>/dev/null | cut -d= -f2)
 [ "$USER" ] || USER="ubnt"
-LOCALHOST=$(ip -4 addr | grep -oE "10\..{3,7}\.[12]0[012345]/.{1,2}" | head -n 1 | cut -d/ -f1)
+LOCALHOST=$(ip -4 addr | grep -oE "$LANSEGM[12]0[012345]/.{1,2}" | head -n 1 | cut -d/ -f1)
 ANTENNEN=$(/usr/sbin/ubnt-discover | grep -E "ER-X|EP-R6" | grep $LANSEGM | grep -v $LOCALHOST)
 echo "${ANTENNEN[@]}"
 
