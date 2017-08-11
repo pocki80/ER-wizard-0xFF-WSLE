@@ -5817,9 +5817,9 @@ echo $output >> $log
         bmkinferfacelistnew=$(jq -M -r '.bmkinferfacelist' $INPUT)
         bmktracerouteipnew=$(jq -M -r '.bmktracerouteip' $INPUT)
         bmktraceroute6ipnew=$(jq -M -r '.bmktraceroute6ip' $INPUT)
-        bmknodedblookupxnew=$(jq -M -r '.bmknodedblookupx' $INPUT)
+        bmknodedblookupxnew=$(jq -M -r '.bmknodedblookup' $INPUT)
         [ "$bmknodedblookupxnew" == "on" ] && bmknodedblookupxnew=1 || bmknodedblookupxnew=0
-        bmkadminlinkxnew=$(jq -M -r '.bmkadminlinkx' $INPUT)
+        bmkadminlinkxnew=$(jq -M -r '.bmkadminlink' $INPUT)
         [ "$bmkadminlinkxnew" == "on" ] && bmkadminlinkxnew=1 || bmkadminlinkxnew=0
 
         bmkiprangesnew=$(jq -M -r '.bmkipranges' $INPUT)
