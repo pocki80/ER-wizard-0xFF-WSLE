@@ -5802,29 +5802,84 @@ echo $output >> $log
     ### BMK Config
     if [ -f "/config/custom/www/settings.inc" ]; then
         bmksettingfile="/config/custom/www/settings.inc"
+
+        ## 1 LOAD existing settings
         bmkinferfacelist=$(head -n 20 $bmksettingfile | grep interface_1100_list | grep -oE "'.*'" | awk -F"'" {'print $2;'})
-        #bmktracerouteip=$(head -n 20 $bmksettingfile | grep traceroute_to | grep -oE "'.*'" | awk -F"'" {'print $2;'})
-        #bmknodedblookupx=$(head -n 20 $bmksettingfile | grep get_nslookup_from_nodedb | grep -oE "=[0,1];" | awk {'gsub("=","",$1);gsub(";","",$1);gsub(" ","",$1); print $1;'})
-        #bmkadminlinkx=$(head -n 20 $bmksettingfile | grep show_link_to_adminlogin | grep -oE "=[0,1];" | awk {'gsub("=","",$1);gsub(";","",$1);gsub(" ","",$1); print $1;'})
-        #bmkipranges=$(head -n 30 $bmksettingfile | grep ipranges= | grep -oE "'.*'" | awk -F"'" {'print $2;'})
-        #bmkipaddresses=$(head -n 30 $bmksettingfile | grep ipaddresses= | grep -oE "'.*'" | awk -F"'" {'print $2;'})
-        #bmkallowiphones=$(head -n 30 $bmksettingfile | grep allowiphones | grep -oE "=[0,1];" | awk {'gsub("=","",$1);gsub(";","",$1);gsub(" ","",$1); print $1;'})
+        bmktracerouteip=$(head -n 20 $bmksettingfile | grep traceroute_to | grep -oE "'.*'" | awk -F"'" {'print $2;'})
+        bmktraceroute6ip=$(head -n 20 $bmksettingfile | grep traceroute6_to | grep -oE "'.*'" | awk -F"'" {'print $2;'})
+        bmknodedblookupx=$(head -n 20 $bmksettingfile | grep get_nslookup_from_nodedb | grep -oE "=[0,1];" | awk {'gsub("=","",$1);gsub(";","",$1);gsub(" ","",$1); print $1;'})
+        bmkadminlinkx=$(head -n 20 $bmksettingfile | grep show_link_to_adminlogin | grep -oE "=[0,1];" | awk {'gsub("=","",$1);gsub(";","",$1);gsub(" ","",$1); print $1;'})
+        bmkipranges=$(head -n 30 $bmksettingfile | grep ipranges= | grep -oE "'.*'" | awk -F"'" {'print $2;'})
+        bmkipaddresses=$(head -n 30 $bmksettingfile | grep ipaddresses= | grep -oE "'.*'" | awk -F"'" {'print $2;'})
+        bmkallowiphones=$(head -n 30 $bmksettingfile | grep allowiphones | grep -oE "=[0,1];" | awk {'gsub("=","",$1);gsub(";","",$1);gsub(" ","",$1); print $1;'})
         
+        ## 2 prepare NEW settings
         bmkinferfacelistnew=$(jq -M -r '.bmkinferfacelist' $INPUT)
-        #bmktracerouteipnew=$(jq -M -r '.bmktracerouteip' $INPUT)
-        #bmknodedblookupxnew=$(jq -M -r '.bmknodedblookupx' $INPUT)
-        #bmkadminlinkxnew=$(jq -M -r '.bmkadminlinkx' $INPUT)
+        bmktracerouteipnew=$(jq -M -r '.bmktracerouteip' $INPUT)
+        bmktraceroute6ipnew=$(jq -M -r '.bmktraceroute6ip' $INPUT)
+        bmknodedblookupxnew=$(jq -M -r '.bmknodedblookupx' $INPUT)
+        [ "$bmknodedblookupxnew" == "on" ] && bmknodedblookupxnew=1 || bmknodedblookupxnew=0
+        bmkadminlinkxnew=$(jq -M -r '.bmkadminlinkx' $INPUT)
+        [ "$bmkadminlinkxnew" == "on" ] && bmkadminlinkxnew=1 || bmkadminlinkxnew=0
+
+        bmkiprangesnew=$(jq -M -r '.bmkipranges' $INPUT)
+        bmkipaddressesnew=$(jq -M -r '.bmkipaddresses' $INPUT)
+        bmkallowiphonesnew=$(jq -M -r '.bmkallowiphones' $INPUT)
+        [ "$bmkallowiphonesnew" == "on" ] && bmkallowiphonesnew=1 || bmkallowiphonesnew=0
         
-        [ "$bmkinferfacelist" ] || bmkinferfacelist="br0.1100"
-        #[ "$bmktracerouteip" ] || bmktracerouteip="n/a"
-        #[ "$bmknodedblookupx" -eq 1 ] && bmksettings=$bmksettings",\"bmknodedblookup\":\"on\""
-        #[ "$bmkadminlinkx" -eq 1 ]    && bmksettings=$bmksettings",\"bmkadminlink\":\"on\""
-        #echo "changes for settings.inc recognized" >>$log
+        ## 2a ensure DEFAULTS where needed
+        [ "$bmkinferfacelistnew" ] || bmkinferfacelistnew="br0.1100"
+        [ "$bmktracerouteipnew" ] || bmktracerouteipnew="subway.funkfeuer.at"
+        [ "$bmktraceroute6ipnew" ] || bmktraceroute6ipnew="subway.funkfeuer.at"
+        
+        ## 3 compare, APPLY new settings
         if [ "$bmkinferfacelist" ] && [ "$bmkinferfacelistnew" ] && [ "$bmkinferfacelist" != "$bmkinferfacelistnew" ]; then
             echo "changes for settings.inc recognized: new interface_list" >>$log
             echo "DEBUG: old=$bmkinferfacelist" >>$log
             echo "DEBUG: new=$bmkinferfacelistnew" >>$log
             sed -i "s/interface_1100_list='"$bmkinferfacelist"'/interface_1100_list='"$bmkinferfacelistnew"'/g" $bmksettingfile 2>>$log
+        fi
+        if [ "$bmktracerouteip" ] && [ "$bmktracerouteipnew" ] && [ "$bmktracerouteip" != "$bmktracerouteipnew" ]; then
+            echo "changes for settings.inc recognized: new traceroute_to" >>$log
+            echo "DEBUG: old=$bmktracerouteip" >>$log
+            echo "DEBUG: new=$bmktracerouteipnew" >>$log
+            sed -i "s/traceroute_to='"$bmktracerouteip"'/traceroute_to='"$bmktracerouteipnew"'/g" $bmksettingfile 2>>$log
+        fi
+        if [ "$bmktraceroute6ip" ] && [ "$bmktraceroute6ipnew" ] && [ "$bmktraceroute6ip" != "$bmktraceroute6ipnew" ]; then
+            echo "changes for settings.inc recognized: new traceroute6_to" >>$log
+            echo "DEBUG: old=$bmktraceroute6ip" >>$log
+            echo "DEBUG: new=$bmktraceroute6ipnew" >>$log
+            sed -i "s/traceroute6_to='"$bmktraceroute6ip"'/traceroute6_to='"$bmktraceroute6ipnew"'/g" $bmksettingfile 2>>$log
+        fi
+        if [ "$bmkipranges" != "$bmkiprangesnew" ]; then
+            echo "changes for settings.inc recognized: new ipranges" >>$log
+            echo "DEBUG: old=$bmkipranges" >>$log
+            echo "DEBUG: new=$bmkiprangesnew" >>$log
+            sed -i "s/ipranges='"$bmkipranges"'/ipranges='"$bmkiprangesnew"'/g" $bmksettingfile 2>>$log
+        fi
+        if [ "$bmkipaddresses" != "$bmkipaddressesnew" ]; then
+            echo "changes for settings.inc recognized: new ipaddresses" >>$log
+            echo "DEBUG: old=$bmkipaddresses" >>$log
+            echo "DEBUG: new=$bmkipaddressesnew" >>$log
+            sed -i "s/ipaddresses='"$bmkipaddresses"'/ipaddresses='"$bmkipaddressesnew"'/g" $bmksettingfile 2>>$log
+        fi
+        if [ "$bmkallowiphones" != "$bmkallowiphonesnew" ]; then
+            echo "changes for settings.inc recognized: new allowiphones" >>$log
+            echo "DEBUG: old=$bmkallowiphones" >>$log
+            echo "DEBUG: new=$bmkallowiphonesnew" >>$log
+            sed -i "s/allowiphones='"$bmkallowiphones"'/allowiphones='"$bmkallowiphonesnew"'/g" $bmksettingfile 2>>$log
+        fi
+        if [ "$bmknodedblookupx" != "$bmknodedblookupxnew" ]; then
+            echo "changes for settings.inc recognized: new get_nslookup_from_nodedb" >>$log
+            echo "DEBUG: old=$bmknodedblookupx" >>$log
+            echo "DEBUG: new=$bmknodedblookupxnew" >>$log
+            sed -i "s/get_nslookup_from_nodedb='"$bmknodedblookupx"'/get_nslookup_from_nodedb='"$bmknodedblookupxnew"'/g" $bmksettingfile 2>>$log
+        fi
+        if [ "$bmkadminlinkx" != "$bmkadminlinkxnew" ]; then
+            echo "changes for settings.inc recognized: new show_link_to_adminlogin" >>$log
+            echo "DEBUG: old=$bmkadminlinkx" >>$log
+            echo "DEBUG: new=$bmkadminlinkxnew" >>$log
+            sed -i "s/show_link_to_adminlogin='"$bmkadminlinkx"'/show_link_to_adminlogin='"$bmkadminlinkxnew"'/g" $bmksettingfile 2>>$log
         fi
     else
         echo "settings.inc missing, will not change anything" >>$log
