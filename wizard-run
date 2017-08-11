@@ -5867,19 +5867,19 @@ echo $output >> $log
             echo "changes for settings.inc recognized: new allowiphones" >>$log
             echo "DEBUG: old=$bmkallowiphones" >>$log
             echo "DEBUG: new=$bmkallowiphonesnew" >>$log
-            sed -i "s/allowiphones='"$bmkallowiphones"'/allowiphones='"$bmkallowiphonesnew"'/g" $bmksettingfile 2>>$log
+            sed -i "s/allowiphones="$bmkallowiphones"/allowiphones="$bmkallowiphonesnew"/g" $bmksettingfile 2>>$log
         fi
         if [ "$bmknodedblookupx" != "$bmknodedblookupxnew" ]; then
             echo "changes for settings.inc recognized: new get_nslookup_from_nodedb" >>$log
             echo "DEBUG: old=$bmknodedblookupx" >>$log
             echo "DEBUG: new=$bmknodedblookupxnew" >>$log
-            sed -i "s/get_nslookup_from_nodedb='"$bmknodedblookupx"'/get_nslookup_from_nodedb='"$bmknodedblookupxnew"'/g" $bmksettingfile 2>>$log
+            sed -i "s/get_nslookup_from_nodedb="$bmknodedblookupx"/get_nslookup_from_nodedb="$bmknodedblookupxnew"/g" $bmksettingfile 2>>$log
         fi
         if [ "$bmkadminlinkx" != "$bmkadminlinkxnew" ]; then
             echo "changes for settings.inc recognized: new show_link_to_adminlogin" >>$log
             echo "DEBUG: old=$bmkadminlinkx" >>$log
             echo "DEBUG: new=$bmkadminlinkxnew" >>$log
-            sed -i "s/show_link_to_adminlogin='"$bmkadminlinkx"'/show_link_to_adminlogin='"$bmkadminlinkxnew"'/g" $bmksettingfile 2>>$log
+            sed -i "s/show_link_to_adminlogin="$bmkadminlinkx"/show_link_to_adminlogin="$bmkadminlinkxnew"/g" $bmksettingfile 2>>$log
         fi
     else
         echo "settings.inc missing, will not change anything" >>$log
