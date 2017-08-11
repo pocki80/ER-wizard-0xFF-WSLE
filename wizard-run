@@ -5820,10 +5820,10 @@ echo $output >> $log
         #[ "$bmknodedblookupx" -eq 1 ] && bmksettings=$bmksettings",\"bmknodedblookup\":\"on\""
         #[ "$bmkadminlinkx" -eq 1 ]    && bmksettings=$bmksettings",\"bmkadminlink\":\"on\""
         #echo "changes for settings.inc recognized" >>$log
-        if [ "$bmkinferfacelist" ] && [ "$bmkinferfacelistnew" ] && [ "$bmkinferfacelist"!=="$bmkinferfacelistnew" ]; then
+        if [ "$bmkinferfacelist" ] && [ "$bmkinferfacelistnew" ] && [ "$bmkinferfacelist" != "$bmkinferfacelistnew" ]; then
             echo "changes for settings.inc recognized: new interface_list" >>$log
             echo "DEBUG: old=$bmkinferfacelist" >>$log
-            echo "DEBUG: new=$bmkinferfacelist" >>$log
+            echo "DEBUG: new=$bmkinferfacelistnew" >>$log
             sed -i "s/interface_1100_list='"$bmkinferfacelist"'/interface_1100_list='"$bmkinferfacelistnew"'/g" $bmksettingfile 2>>$log
         fi
     else
