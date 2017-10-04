@@ -5813,7 +5813,9 @@ echo $output >> $log
 
     ##########
     ### BMK Config
-    if [ -f "/config/custom/www/settings.inc" ]; then
+    if [[ "$updatefromgithub" == "on" ]]; then
+        echo "DEBUG: Ignore settings.inc changes due to update from github" >>$log
+    elif [ -f "/config/custom/www/settings.inc" ]; then
         bmksettingfile="/config/custom/www/settings.inc"
 
         ## 1 LOAD existing settings
@@ -5842,8 +5844,8 @@ echo $output >> $log
         
         ## 2a ensure DEFAULTS where needed
         [ "$bmkinferfacelistnew" ] || bmkinferfacelistnew="br0.1100"
-        [ "$bmktracerouteipnew" ] || bmktracerouteipnew="subway.funkfeuer.at"
-        [ "$bmktraceroute6ipnew" ] || bmktraceroute6ipnew="subway.funkfeuer.at"
+        [ "$bmktracerouteipnew" ] || bmktracerouteipnew="r01krypta.bb.funkfeuer.at"
+        [ "$bmktraceroute6ipnew" ] || bmktraceroute6ipnew="r01krypta.bb.funkfeuer.at"
         
         ## 3 compare, APPLY new settings
         if [ "$bmkinferfacelist" ] && [ "$bmkinferfacelistnew" ] && [ "$bmkinferfacelist" != "$bmkinferfacelistnew" ]; then
