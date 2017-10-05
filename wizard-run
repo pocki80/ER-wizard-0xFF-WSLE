@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 # EdgeMAX Wizard "0xFF-BMK-Webstatus-LetsEncrypt" created 02/2017 by CPO/BMK for FunkFeuer.at
-# Version 20171004/bmk4.7
+# Version 20171005/bmk4.7
 # ^-- previous line is used frombmk-webstatus-package as version identification, dont remove "Version "
 # Shortform: 0xffwsle 0xFF-WSLE
 #
@@ -5040,12 +5040,12 @@ esac
     #get current public FQDN
     LIST=""
     for i in $(ip -4 a | grep global | awk '{print $2}' | cut -d/ -f1 | grep -vE "10\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}|192\.168\.[0-9]{1,3}\.[0-9]{1,3}"); do
-        dn=$(/usr/bin/host $i | grep -v "not found" | awk '{gsub(".$","");print $5}')
+        dn=$(/usr/bin/host $i | grep -v "not found" | awk '{gsub(".$","");print $5}' | awk '{print tolower($0)}')
         [ "$dn" ] && [ $(echo "$LIST" | wc -w) -eq 0 ] && LIST=$(echo $dn)
         [ "$dn" ] && [ $(echo "$LIST" | grep $dn -c) -eq 0 ] && LIST=$(echo -e "$LIST"'\n'$dn)
     done
     for i in $(ip -6 a | grep global | grep -vE "2a02:61:0:ee:1:|:51de:b00b" | awk '{print $2}' | cut -d/ -f1); do
-        dn=$(/usr/bin/host $i | grep -v "not found" | awk '{gsub(".$","");print $5}' )
+        dn=$(/usr/bin/host $i | grep -v "not found" | awk '{gsub(".$","");print $5}' | awk '{print tolower($0)}')
         [ "$dn" ] && [ $(echo "$LIST" | wc -w) -eq 0 ] && LIST=$(echo $dn)
         [ "$dn" ] && [ $(echo "$LIST" | grep $dn -c) -eq 0 ] && LIST=$(echo -e "$LIST"'\n'$dn)
     done
@@ -5063,10 +5063,10 @@ esac
     [ "$PUBLICIP" ] && ledetails=',"currentfqdn":"'$PUBLICIP'"' || ledetails=',"currentfqdn":"not available"'
 
     #get current register from domain.csr
-    CURRENT=$(openssl req -in /config/letsencrypt/domain.csr -noout -text | grep Subject | grep CN= | awk -F'=' {'print $2'})
+    CURRENT=$(openssl req -in /config/letsencrypt/domain.csr -noout -text | grep Subject | grep CN= | awk -F'=' {'print $2'} | awk '{print tolower($0)}')
     if [ ! "$CURRENT" ]; then 
-        CURRENT=$(openssl req -in /config/letsencrypt/domain.csr -noout -text | grep -A 1 "X509v3 Subject Alternative Name" | tail -n 1 | sed -e 's/ //g' | sed -e 's/DNS://g')
-        CURRENT=$(echo $CURRENT | tr , "\n" | sort | tr "\n" , | awk '{gsub(".$","");print $1}')
+        CURRENT=$(openssl req -in /config/letsencrypt/domain.csr -noout -text | grep -A 1 "X509v3 Subject Alternative Name" | tail -n 1 | sed -e 's/ //g' | sed -e 's/DNS://g' )
+        CURRENT=$(echo $CURRENT | tr , "\n" | sort | tr "\n" , | awk '{gsub(".$","");print $1}' | awk '{print tolower($0)}')
     fi
     [ "$CURRENT" ] && ledetails=$ledetails',"domainfqdn":"'$CURRENT'"' || ledetails=$ledetails',"domainfqdn":"not available"'
     
@@ -5075,7 +5075,7 @@ esac
         EXPIRES=$(openssl x509 -enddate -noout -in /config/letsencrypt/signed.crt | awk -F'=' {'print $2'})
         VALIDFROM=$(openssl x509 -startdate -noout -in /config/letsencrypt/signed.crt | awk -F'=' {'print $2'})
         SUBJECT=$(openssl x509 -text -noout -in /config/letsencrypt/signed.crt | grep -A 1 "X509v3 Subject Alternative Name" | tail -n 1 | sed -e 's/ //g' | sed -e 's/DNS://g')
-        SUBJECT=$(echo $SUBJECT | tr , "\n" | sort | tr "\n" , | awk '{gsub(".$","");print $1}')
+        SUBJECT=$(echo $SUBJECT | tr , "\n" | sort | tr "\n" , | awk '{gsub(".$","");print $1}' | awk '{print tolower($0)}')
     fi
     [ "$VALIDFROM" ] && ledetails=$ledetails',"certfrom":"'$VALIDFROM'"' || ledetails=$ledetails',"certfrom":"not available"'
     [ "$SUBJECT" ] && ledetails=$ledetails',"certfqdn":"'$SUBJECT'"' || ledetails=$ledetails',"certfqdn":"not available"'
@@ -5472,7 +5472,7 @@ apply () {
             # get all local FQDNs from global ip addresses
             LIST=""
             for i in $(ip -4 a | grep global | awk '{print $2}' | cut -d/ -f1 | grep -vE "10\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}|192\.168\.[0-9]{1,3}\.[0-9]{1,3}"); do
-                dn=$(/usr/bin/host $i | grep -v "not found" | awk '{gsub(".$","");print $5}')
+                dn=$(/usr/bin/host $i | grep -v "not found" | awk '{gsub(".$","");print $5}' | awk '{print tolower($0)}')
                 [ "$dn" ] && [ $(echo "$LIST" | wc -w) -eq 0 ] && LIST=$(echo $dn)
                 [ "$dn" ] && [ $(echo "$LIST" | grep $dn -c) -eq 0 ] && LIST=$(echo -e "$LIST"'\n'$dn)
             done
@@ -5483,10 +5483,10 @@ apply () {
             done
             LISTCOUNT=$(echo "$LIST" | wc -l)
 
-            CURRENT=$(openssl req -in /config/letsencrypt/domain.csr -noout -text | grep Subject | grep CN= | awk -F'=' {'print $2'})
+            CURRENT=$(openssl req -in /config/letsencrypt/domain.csr -noout -text | grep Subject | grep CN= | awk -F'=' {'print $2'} | awk '{print tolower($0)}')
             if [ ! "$CURRENT" ]; then 
-                CURRENT=$(openssl req -in /config/letsencrypt/domain.csr -noout -text | grep -A 1 "X509v3 Subject Alternative Name" | tail -n 1 | sed -e 's/ //g')
-                CURRENT=$(echo $CURRENT | tr , "\n" | sort | tr "\n" , | awk '{gsub(".$","");print $1}')
+                CURRENT=$(openssl req -in /config/letsencrypt/domain.csr -noout -text | grep -A 1 "X509v3 Subject Alternative Name" | tail -n 1 | sed -e 's/ //g' )
+                CURRENT=$(echo $CURRENT | tr , "\n" | sort | tr "\n" , | awk '{gsub(".$","");print $1}' | awk '{print tolower($0)}')
             fi
             #https://github.com/diafygi/acme-tiny/blob/master/README.md
             if [ $LISTCOUNT -eq 0 ]; then
@@ -5899,7 +5899,6 @@ echo $output >> $log
     else
         echo "settings.inc missing, will not change anything" >>$log
     fi
-    
     ### BMK Config
     ##########
 
