@@ -5672,10 +5672,12 @@ esac
     [ "$PUBLICIP" ] && ledetails=',"currentfqdn":"'$PUBLICIP'"' || ledetails=',"currentfqdn":"not available"'
 
     #get current register from domain.csr
-    CURRENT=$(openssl req -in /config/letsencrypt/domain.csr -noout -text | grep Subject | grep CN= | awk -F'=' {'print $2'} | awk '{print tolower($0)}')
-    if [ ! "$CURRENT" ]; then 
-        CURRENT=$(openssl req -in /config/letsencrypt/domain.csr -noout -text | grep -A 1 "X509v3 Subject Alternative Name" | tail -n 1 | sed -e 's/ //g' | sed -e 's/DNS://g' )
-        CURRENT=$(echo $CURRENT | tr , "\n" | sort | tr "\n" , | awk '{gsub(".$","");print $1}' | awk '{print tolower($0)}')
+    if [ -f /config/letsencrypt/domain.csr ]; then
+        CURRENT=$(openssl req -in /config/letsencrypt/domain.csr -noout -text | grep Subject | grep CN= | awk -F'=' {'print $2'} | awk '{print tolower($0)}')
+        if [ ! "$CURRENT" ]; then 
+            CURRENT=$(openssl req -in /config/letsencrypt/domain.csr -noout -text | grep -A 1 "X509v3 Subject Alternative Name" | tail -n 1 | sed -e 's/ //g' | sed -e 's/DNS://g' )
+            CURRENT=$(echo $CURRENT | tr , "\n" | sort | tr "\n" , | awk '{gsub(".$","");print $1}' | awk '{print tolower($0)}')
+        fi
     fi
     [ "$CURRENT" ] && ledetails=$ledetails',"domainfqdn":"'$CURRENT'"' || ledetails=$ledetails',"domainfqdn":"not available"'
     
