@@ -5815,7 +5815,7 @@ esac
         bmknodedblookupx=$(head -n 20 $bmksettingfile | grep get_nslookup_from_nodedb | grep -oE "=[0,1];" | awk {'gsub("=","",$1);gsub(";","",$1);gsub(" ","",$1); print $1;'})
         bmkadminlinkx=$(head -n 20 $bmksettingfile | grep show_link_to_adminlogin | grep -oE "=[0,1];" | awk {'gsub("=","",$1);gsub(";","",$1);gsub(" ","",$1); print $1;'})
         bmkallowiphones=$(head -n 30 $bmksettingfile | grep allowiphones | grep -oE "=[0,1];" | awk {'gsub("=","",$1);gsub(";","",$1);gsub(" ","",$1); print $1;'})
-        bmkubntdiscovertime=$(head -n 40 $bmksettingfile | grep ubntdiscovertime | grep -oE "=[0,1];" | awk {'gsub("=","",$1);gsub(";","",$1);gsub(" ","",$1);gsub("\47","",$1); print $1;'})
+        bmkubntdiscovertime=$(head -n 40 $bmksettingfile | grep ubntdiscovertime | grep -oE "=.*" | awk {'gsub("=","",$1);gsub(";","",$1);gsub(" ","",$1);gsub("\47","",$1); print $1;'})
         [ "$bmkinferfacelist" ] || bmkinferfacelist="n/a"
         [ "$bmktracerouteip" ] || bmktracerouteip="n/a"
         [ "$bmktraceroute6ip" ] || bmktraceroute6ip="n/a"
@@ -6441,7 +6441,7 @@ echo $output >> $log
         bmkipranges=$(head -n 30 $bmksettingfile | grep ipranges= | grep -oE "'.*'" | awk -F"'" {'print $2;'})
         bmkipaddresses=$(head -n 30 $bmksettingfile | grep ipaddresses= | grep -oE "'.*'" | awk -F"'" {'print $2;'})
         bmkallowiphones=$(head -n 30 $bmksettingfile | grep allowiphones | grep -oE "=[0,1];" | awk {'gsub("=","",$1);gsub(";","",$1);gsub(" ","",$1); print $1;'})
-        bmkubntdiscovertime=$(head -n 40 $bmksettingfile | grep ubntdiscovertime | grep -oE "=[0,1];" | awk {'gsub("=","",$1);gsub(";","",$1);gsub(" ","",$1);gsub("\47","",$1); print $1;'})
+        bmkubntdiscovertime=$(head -n 40 $bmksettingfile | grep ubntdiscovertime | grep -oE "=.*" | awk {'gsub("=","",$1);gsub(";","",$1);gsub(" ","",$1);gsub("\47","",$1); print $1;'})
         
         ## 2 prepare NEW settings
         bmkinferfacelistnew=$(jq -M -r '.bmkinferfacelist' $INPUT)
@@ -6518,7 +6518,8 @@ echo $output >> $log
             echo "changes for settings.inc recognized: new ubntdiscovertime" >>$log
             echo "DEBUG: old=$bmkubntdiscovertime" >>$log
             echo "DEBUG: new=$bmkubntdiscovertimenew" >>$log
-            sed -i "s/ubntdiscovertime='"$bmkinferfacelist"'/ubntdiscovertime='"$bmkinferfacelistnew"'/g" $bmksettingfile 2>>$log
+            sed -i "s/ubntdiscovertime='"$bmkubntdiscovertime"'/ubntdiscovertime='"$bmkubntdiscovertimenew"'/g" $bmksettingfile 2>>$log
+            sed -i "s/ubntdiscovertime="$bmkubntdiscovertime"/ubntdiscovertime='"$bmkubntdiscovertimenew"'/g" $bmksettingfile 2>>$log
         fi
     else
         echo "settings.inc missing, will not change anything" >>$log
