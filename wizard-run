@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 # EdgeMAX Wizard "0xFF-BMK-Webstatus-LetsEncrypt" created 02/2017 by CPO/BMK for FunkFeuer.at
-# Version 20171103/bmk4.7
+# Version 20171113/bmk4.7
 # ^-- previous line is used frombmk-webstatus-package as version identification, dont remove "Version "
 # Shortform: 0xffwsle 0xFF-WSLE
 #
@@ -5814,12 +5814,14 @@ esac
         bmknodedblookupx=$(head -n 20 $bmksettingfile | grep get_nslookup_from_nodedb | grep -oE "=[0,1];" | awk {'gsub("=","",$1);gsub(";","",$1);gsub(" ","",$1); print $1;'})
         bmkadminlinkx=$(head -n 20 $bmksettingfile | grep show_link_to_adminlogin | grep -oE "=[0,1];" | awk {'gsub("=","",$1);gsub(";","",$1);gsub(" ","",$1); print $1;'})
         bmkallowiphones=$(head -n 30 $bmksettingfile | grep allowiphones | grep -oE "=[0,1];" | awk {'gsub("=","",$1);gsub(";","",$1);gsub(" ","",$1); print $1;'})
+        bmkubntdiscovertime=$(head -n 40 $bmksettingfile | grep ubntdiscovertime | grep -oE "=[0,1];" | awk {'gsub("=","",$1);gsub(";","",$1);gsub(" ","",$1);gsub("\47","",$1); print $1;'})
         [ "$bmkinferfacelist" ] || bmkinferfacelist="n/a"
         [ "$bmktracerouteip" ] || bmktracerouteip="n/a"
         [ "$bmktraceroute6ip" ] || bmktraceroute6ip="n/a"
         #[ "$bmkipranges" ] || bmkipranges="n/a"
         #[ "$bmkipaddresses" ] || bmkipaddresses="n/a"
-        bmksettings=",\"bmkinferfacelist\":\"$bmkinferfacelist\",\"bmktracerouteip\":\"$bmktracerouteip\",\"bmktraceroute6ip\":\"$bmktraceroute6ip\",\"bmkipranges\":\"$bmkipranges\",\"bmkipaddresses\":\"$bmkipaddresses\",\"bmknodedblookup\":\"$bmknodedblookup\",\"bmkadminlink\":\"$bmkadminlink\""
+        [ "$bmkubntdiscovertime" ] || bmkubntdiscovertime="150"
+        bmksettings=",\"bmkinferfacelist\":\"$bmkinferfacelist\",\"bmktracerouteip\":\"$bmktracerouteip\",\"bmktraceroute6ip\":\"$bmktraceroute6ip\",\"bmkipranges\":\"$bmkipranges\",\"bmkipaddresses\":\"$bmkipaddresses\",\"bmknodedblookup\":\"$bmknodedblookup\",\"bmkadminlink\":\"$bmkadminlink\",\"bmkubntdiscovertime\":\"$bmkubntdiscovertime\""
         [ "$bmknodedblookupx" -eq 1 ] && bmksettings=$bmksettings",\"bmknodedblookup\":\"on\""
         [ "$bmkadminlinkx" -eq 1 ]    && bmksettings=$bmksettings",\"bmkadminlink\":\"on\""
         [ "$bmkallowiphones" -eq 1 ]  && bmksettings=$bmksettings",\"bmkallowiphones\":\"on\""
@@ -6438,12 +6440,14 @@ echo $output >> $log
         bmkipranges=$(head -n 30 $bmksettingfile | grep ipranges= | grep -oE "'.*'" | awk -F"'" {'print $2;'})
         bmkipaddresses=$(head -n 30 $bmksettingfile | grep ipaddresses= | grep -oE "'.*'" | awk -F"'" {'print $2;'})
         bmkallowiphones=$(head -n 30 $bmksettingfile | grep allowiphones | grep -oE "=[0,1];" | awk {'gsub("=","",$1);gsub(";","",$1);gsub(" ","",$1); print $1;'})
+        bmkubntdiscovertime=$(head -n 40 $bmksettingfile | grep ubntdiscovertime | grep -oE "=[0,1];" | awk {'gsub("=","",$1);gsub(";","",$1);gsub(" ","",$1);gsub("\47","",$1); print $1;'})
         
         ## 2 prepare NEW settings
         bmkinferfacelistnew=$(jq -M -r '.bmkinferfacelist' $INPUT)
         bmktracerouteipnew=$(jq -M -r '.bmktracerouteip' $INPUT)
         bmktraceroute6ipnew=$(jq -M -r '.bmktraceroute6ip' $INPUT)
         bmknodedblookupxnew=$(jq -M -r '.bmknodedblookup' $INPUT)
+        bmkubntdiscovertimenew=$(jq -M -r '.bmkubntdiscovertime' $INPUT)
         [ "$bmknodedblookupxnew" == "on" ] && bmknodedblookupxnew=1 || bmknodedblookupxnew=0
         bmkadminlinkxnew=$(jq -M -r '.bmkadminlink' $INPUT)
         [ "$bmkadminlinkxnew" == "on" ] && bmkadminlinkxnew=1 || bmkadminlinkxnew=0
@@ -6457,6 +6461,7 @@ echo $output >> $log
         [ "$bmkinferfacelistnew" ] || bmkinferfacelistnew="br0.1100"
         [ "$bmktracerouteipnew" ] || bmktracerouteipnew="78.41.115.36"
         [ "$bmktraceroute6ipnew" ] || bmktraceroute6ipnew="78.41.115.36"
+        [ "$bmkubntdiscovertime" ] || bmkubntdiscovertime="150"
         
         ## 3 compare, APPLY new settings
         if [ "$bmkinferfacelist" ] && [ "$bmkinferfacelistnew" ] && [ "$bmkinferfacelist" != "$bmkinferfacelistnew" ]; then
@@ -6506,6 +6511,13 @@ echo $output >> $log
             echo "DEBUG: old=$bmkadminlinkx" >>$log
             echo "DEBUG: new=$bmkadminlinkxnew" >>$log
             sed -i "s/show_link_to_adminlogin="$bmkadminlinkx"/show_link_to_adminlogin="$bmkadminlinkxnew"/g" $bmksettingfile 2>>$log
+        fi
+
+        if [ "$bmkubntdiscovertime" ] && [ "$bmkubntdiscovertimenew" ] && [ "$bmkubntdiscovertime" != "$bmkubntdiscovertimenew" ]; then
+            echo "changes for settings.inc recognized: new ubntdiscovertime" >>$log
+            echo "DEBUG: old=$bmkubntdiscovertime" >>$log
+            echo "DEBUG: new=$bmkubntdiscovertimenew" >>$log
+            sed -i "s/ubntdiscovertime='"$bmkinferfacelist"'/ubntdiscovertime='"$bmkinferfacelistnew"'/g" $bmksettingfile 2>>$log
         fi
     else
         echo "settings.inc missing, will not change anything" >>$log
