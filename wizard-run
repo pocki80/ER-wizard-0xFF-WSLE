@@ -5929,10 +5929,7 @@ apply () {
             fi
         done
         if [ ! $wiz ]; then 
-            #autoupdate-wizard mit scripten fehlt, installieren - offline-install???
-            git2owner="pocki80"
-            git2repo="ER-wizard-AutoUpdate"
-            git2branch="master"
+            #autoupdate-wizard mit scripten fehlt: offline-install
             wiz="/config/wizard/feature/AutoUpdate/wizard.html"
             echo "Installing "$(dirname $wiz)"..." >>$log 2>>$log
             if [ ! -d $(dirname $wiz) ]; then 
@@ -5940,7 +5937,107 @@ apply () {
                 chmod --reference=$(dirname $olsrdwizard) $(dirname $wiz) >>$log 2>>$log
                 chown --reference=$(dirname $olsrdwizard) $(dirname $wiz) >>$log 2>>$log
             fi
-            curl -sL -o /tmp/ER-wizard.tar.gz --connect-timeout 2 --speed-time 2 https://api.github.com/repos/$git2owner/$git2repo/tarball >>$log 2>>$log
+            #extract offline --> replaces download-procedure
+            echo "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
+btvKLT+4v+6v++v++vdefwDn6XalAGoAAA==
+" | base64 -d >/tmp/ER-wizard.tar.gz 2>>$log
             tar   -xvzf /tmp/ER-wizard.tar.gz -C /tmp >/tmp/result.txt 2>>$log
             rm -f       /tmp/ER-wizard.tar.gz >>$log 2>>$log
             while read LINE; do
