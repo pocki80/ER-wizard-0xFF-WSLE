@@ -5077,6 +5077,30 @@ if [ -f /tmp/$filename ]; then
     echo "Execute package..." >>$log
     sudo dpkg -i /tmp/$filename >>$log 2>>$log
     echo "...wizard install-procedure finished" >>$log
+
+## install portchange failed??
+if [ $(tail -n 10 $log | grep -c "without config session") -ne 0 ]; then
+ echo "DEBUG: detected installation problem with port 80, trying to fix via command wrapper" >>$log
+ echo "{\"success\":\"1\"}"
+cmd="/opt/vyatta/sbin/vyatta-cfg-cmd-wrapper"
+tfile=$(mktemp)
+(
+$cmd begin
+ret=0
+$cmd set service gui http-port 81 || ret=1
+if [ $ret == 0 ]; then
+    $cmd commit || ret=1
+fi
+if [ $ret == 0 ]; then
+    $cmd save || ret=1
+fi
+$cmd end
+exit $ret
+) >$tfile 2>&1
+ret=$?
+output=$(cat $tfile)
+rm -f $tfile
+echo $output >> $log
 fi
 
 rm -f /tmp/$filename >>$log
@@ -6513,28 +6537,6 @@ echo $output >> $log
     ### BMK Config
     if [[ "$updatefromgithub" == "on" ]]; then
         echo "DEBUG: Ignore settings.inc changes due to update from github" >>$log
-        if [ "$error" == "30" ] && [ "$customhttpport" == "80" ] && [ "$orighttpport" == "80" ]; then
-            echo "DEBUG: detected installation problem with port 80, trying to fix via command wrapper" >>$log
-cmd="/opt/vyatta/sbin/vyatta-cfg-cmd-wrapper"
-tfile=$(mktemp)
-(
-$cmd begin
-ret=0
-$cmd set service gui http-port 81 || ret=1
-if [ $ret == 0 ]; then
-    $cmd commit || ret=1
-fi
-if [ $ret == 0 ]; then
-    $cmd save || ret=1
-fi
-$cmd end
-exit $ret
-) >$tfile 2>&1
-ret=$?
-output=$(cat $tfile)
-rm -f $tfile
-echo $output >> $log
-        fi
     elif [ -f "/config/custom/www/settings.inc" ]; then
         bmksettingfile="/config/custom/www/settings.inc"
 
