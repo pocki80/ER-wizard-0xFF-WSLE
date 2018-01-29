@@ -5081,7 +5081,9 @@ if [ -f /tmp/$filename ]; then
     ## install portchange failed??
     if [ $(tail -n 10 $log | grep -c "without config session") -ne 0 ]; then
         echo "DEBUG: detected installation problem with port 80, trying to fix via command wrapper" >>$log
-        #echo "{\"success\":\"1\"}"
+        
+        #need to close session for UI before lighttpd will restart and break the session?
+        echo "{\"success\":\"1\",\"data\":{ \"pkgstatus\":\"installing ... please reload this page in 5 seconds!\"} }"
 cmd="/opt/vyatta/sbin/vyatta-cfg-cmd-wrapper"
 tfile=$(mktemp)
 (
