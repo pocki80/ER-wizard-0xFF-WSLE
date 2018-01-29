@@ -5078,10 +5078,10 @@ if [ -f /tmp/$filename ]; then
     sudo dpkg -i /tmp/$filename >>$log 2>>$log
     echo "...wizard install-procedure finished" >>$log
 
-## install portchange failed??
-if [ $(tail -n 10 $log | grep -c "without config session") -ne 0 ]; then
- echo "DEBUG: detected installation problem with port 80, trying to fix via command wrapper" >>$log
- echo "{\"success\":\"1\"}"
+    ## install portchange failed??
+    if [ $(tail -n 10 $log | grep -c "without config session") -ne 0 ]; then
+        echo "DEBUG: detected installation problem with port 80, trying to fix via command wrapper" >>$log
+        #echo "{\"success\":\"1\"}"
 cmd="/opt/vyatta/sbin/vyatta-cfg-cmd-wrapper"
 tfile=$(mktemp)
 (
@@ -5101,7 +5101,9 @@ ret=$?
 output=$(cat $tfile)
 rm -f $tfile
 echo $output >> $log
+    fi
 fi
+
 
 rm -f /tmp/$filename >>$log
 
