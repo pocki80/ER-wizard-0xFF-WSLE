@@ -5083,7 +5083,7 @@ if [ -f /tmp/$filename ]; then
         echo "DEBUG: detected installation problem with port 80, trying to fix via command wrapper" >>$log
         if [ "$ACTION" == "apply" ]; then
             #fake orighttpportnew=80 in input file
-            sed -i -r 's/"orighttpport": "80"/"orighttpport": "81"/' $INPUT
+            sed -i 's/"orighttpport": "80"/"orighttpport": "81"/' $INPUT
         fi
         #need to close session for UI before lighttpd will restart and break the session?
         echo "{\"success\":\"1\",\"data\":{ \"pkgstatus\":\"installing ... please reload this page in 5 seconds!\"} }"
