@@ -5445,7 +5445,7 @@ if [ $(ps aux | grep lighttpd_custom | grep -vc grep) -eq 0 ]; then
 fi
 
 # replace text in wizard.html
-sed -i 's/"installation... reload page 10sec after loading-circle disappeared"/"loading..."' $(dirname $0)"/wizard.html"
+sed -i 's/"installation... reload page 10sec after loading-circle disappeared"/"loading..."/' $(dirname $0)"/wizard.html" >>$log 2>>$log
 
 # remove installtion block
 sed -i '/^#base64begin/,/^#base64end$/d' $0
