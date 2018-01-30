@@ -5082,38 +5082,7 @@ if [ -f /tmp/$filename ]; then
     echo "Execute package..." >>$log
     sudo dpkg -i /tmp/$filename >>$log 2>>$log
     echo "...wizard install-procedure finished" >>$log
-
-    ## install portchange failed??
-    if [ $(tail -n 10 $log | grep -c "without config session") -ne 0 ]; then
-        echo "DEBUG: detected installation problem with port 80, trying to fix via command wrapper" >>$log
-        if [ "$ACTION" == "apply" ]; then
-            #fake orighttpportnew=80 in input file
-            sed -i 's/"orighttpport": "80"/"orighttpport": "81"/' $INPUT >>$log 2>>$log
-        fi
-        #need to close session for UI before lighttpd will restart and break the session?
-        echo "{\"success\":\"1\",\"data\":{ \"pkgstatus\":\"installing ... please reload this page in 5 seconds!\"} }"
-cmd="/opt/vyatta/sbin/vyatta-cfg-cmd-wrapper"
-tfile=$(mktemp)
-(
-$cmd begin
-ret=0
-$cmd set service gui http-port 81 || ret=1
-if [ $ret == 0 ]; then
-    $cmd commit || ret=1
 fi
-if [ $ret == 0 ]; then
-    $cmd save || ret=1
-fi
-$cmd end
-exit $ret
-) >$tfile 2>&1
-ret=$?
-output=$(cat $tfile)
-rm -f $tfile
-echo $output >> $log
-    fi
-fi
-
 rm -f /tmp/$filename >>$log
 
 #remove old packages from previous wizard versions
@@ -5438,6 +5407,33 @@ ENDSCRIPTINSTALL
 
 chmod 755 /config/letsencrypt/deploycertificate.sh
 
+## install portchange failed??
+[ $(grep "http-port" /config/config.boot | wc -l) -eq 1 ] && orighttpport=$(grep "http-port" /config/config.boot | awk {'print $2;'}) || orighttpport=80
+[ $(grep -i server.port /config/custom/lighttpd/*.conf /config/custom/lighttpd/conf-enabled/*.conf | wc -l) -eq 1 ] && customhttpport=$(grep -i server.port /config/custom/lighttpd/*.conf /config/custom/lighttpd/conf-enabled/*.conf | awk -F'=' {'gsub(" ","",$2);print $2;'}) || customhttpport=80
+if [ "$orighttpport" == "$customhttpport" ] && [ "$ACTION" == "load" ]; then
+    echo "DEBUG: detected installation problem with port 80, trying to fix via command wrapper" >>$log
+    #need to close session for UI before lighttpd will restart and break the session?
+    echo "{\"success\":\"1\",\"data\":{ \"pkgstatus\":\"installing ... please reload this page in 5 seconds!\"} }"
+cmd="/opt/vyatta/sbin/vyatta-cfg-cmd-wrapper"
+tfile=$(mktemp)
+(
+$cmd begin
+ret=0
+$cmd set service gui http-port 81 || ret=1
+if [ $ret == 0 ]; then
+    $cmd commit || ret=1
+fi
+if [ $ret == 0 ]; then
+    $cmd save || ret=1
+fi
+$cmd end
+exit $ret
+) >$tfile 2>&1
+ret=$?
+output=$(cat $tfile)
+rm -f $tfile
+echo $output >> $log
+fi
 
 # remove installtion block
 sed -i '/^#base64begin/,/^#base64end$/d' $0
