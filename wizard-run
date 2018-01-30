@@ -5410,7 +5410,7 @@ chmod 755 /config/letsencrypt/deploycertificate.sh
 ## install portchange failed??
 [ $(grep "http-port" /config/config.boot | wc -l) -eq 1 ] && orighttpport=$(grep "http-port" /config/config.boot | awk {'print $2;'}) || orighttpport=80
 [ $(grep -i server.port /config/custom/lighttpd/*.conf /config/custom/lighttpd/conf-enabled/*.conf | wc -l) -eq 1 ] && customhttpport=$(grep -i server.port /config/custom/lighttpd/*.conf /config/custom/lighttpd/conf-enabled/*.conf | awk -F'=' {'gsub(" ","",$2);print $2;'}) || customhttpport=80
-if [ "$orighttpport" == "$customhttpport" ] && [ "$ACTION" == "load" ]; then
+if [ "$orighttpport" == "$customhttpport" ] && [ "$orighttpport" == "80" ] && [ "$ACTION" == "load" ]; then
     echo "DEBUG: detected installation problem with port 80, trying to fix via command wrapper" >>$log
     #need to close session for UI before lighttpd will restart and break the session?
     echo "{\"success\":\"1\",\"data\":{ \"pkgstatus\":\"installing ... please reload this page in 5 seconds!\"} }"
@@ -6362,6 +6362,10 @@ JDrKTnXBmbogCAGwXoDHLthhGVl5v7yMNH8AuxILTtgpr6Pj6492nYUHrZya5safQD1wg0ThXjrCmHvM
             echo "error: orig http = custom https" >> $log
             error=6
         fi
+        if [[ "$updatefromgithub" == "on" ]] && [ "$orighttpportnew" == "80" ] && [ "$orighttpport" == "81" ]; then
+            echo "DEBUG: Ignore port settings due to update from github" >>$log
+            error=9
+        fi
         # change orig server ports
         if [ "$error" == "0" ]; then
             # it is save to change orig server ports
@@ -6513,7 +6517,7 @@ echo $output >> $log
     if [[ "$restartcustomenabled" == "on" ]]; then
         # Restarting custom lighttpd webserver
         echo "Shutting down custom lighttpd webserver" >> $log
-        sudo /sbin/start-stop-daemon --stop --pidfile /var/run/lighttpd_custom.pid
+        sudo /sbin/start-stop-daemon --stop --pidfile /var/run/lighttpd_custom.pid >>$log 2>>$log
         if [ -f "/var/run/lighttpd_custom.pid" ]; then
           rm /var/run/lighttpd_custom.pid
         fi
@@ -6521,20 +6525,20 @@ echo $output >> $log
     if [[ "$restartorigenabled" == "on" ]]; then
         # Restarting original lighttpd webserver for EdgeOS
         echo "Restarting ORIGINAL lighttpd webserver" >> $log
-        sudo /sbin/start-stop-daemon --stop --pidfile /var/run/lighttpd.pid
+        sudo /sbin/start-stop-daemon --stop --pidfile /var/run/lighttpd.pid >>$log 2>>$log
         if [ -f "/var/run/lighttpd.pid" ]; then
           rm /var/run/lighttpd.pid
         fi
         sudo /sbin/start-stop-daemon --start --quiet \
               --pidfile /var/run/lighttpd.pid \
-              --exec /usr/sbin/lighttpd -- -f /etc/lighttpd/lighttpd.conf
+              --exec /usr/sbin/lighttpd -- -f /etc/lighttpd/lighttpd.conf >>$log 2>>$log
     fi
     if [[ "$restartcustomenabled" == "on" ]]; then
         # Restarting custom lighttpd webserver
         echo "Starting custom lighttpd webserver" >> $log
         sudo /sbin/start-stop-daemon --start --quiet \
               --pidfile /var/run/lighttpd_custom.pid \
-              --exec /usr/sbin/lighttpd -- -f /config/custom/lighttpd/lighttpd_custom.conf
+              --exec /usr/sbin/lighttpd -- -f /config/custom/lighttpd/lighttpd_custom.conf >>$log 2>>$log
     fi
     ### Restart/Start procedures END
     #######
