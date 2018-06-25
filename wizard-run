@@ -5110,6 +5110,9 @@ rm -f /tmp/$filename >>$log
 [ -f "/config/user-data/0xff-bmk-webstatus_4.5_mipsel.deb" ] && rm -f /config/user-data/0xff-bmk-webstatus_4.5_mipsel.deb
 # future versions were saved to /tmp/ and removed automativally after wizard install
 
+[ -L /etc/cron.monthly/letsrenew.sh ]    && rm /etc/cron.monthly/letsrenew.sh
+[ -L /etc/cron.daily/restartservers.sh ] && rm /etc/cron.daily/restartservers.sh
+
 if [ ! -d /config/letsencrypt ]; then
     mkdir /config/letsencrypt
 fi
@@ -5677,8 +5680,8 @@ case $lestatus in
         lefiles=$lefiles',{"name":"[f] /config/custom/bin/ip2dns","status":"'$tmp'"}'
         [ -f "/config/letsencrypt/acme_tiny.py" ] && tmp="ok" || tmp="err"
         lefiles=$lefiles',{"name":"[f] /config/letsencrypt/acme_tiny.py","status":"'$tmp'"}'
-        [ -f "/etc/cron.monthly/letsrenew" ] && tmp="ok" || tmp="err"
-        lefiles=$lefiles',{"name":"[L] /etc/cron.monthly/letsrenew","status":"'$tmp'"}'
+        [ -f "/etc/cron.daily/letsrenew" ] && tmp="ok" || tmp="err"
+        lefiles=$lefiles',{"name":"[L] /etc/cron.daily/letsrenew","status":"'$tmp'"}'
         #f  /etc/lighttpd/server.pem (orig, content!)
         #f  /config/letsencyrpt/repair.sh
         #f  /config/letsencyrpt/original_server.pem
