@@ -5946,7 +5946,7 @@ apply () {
         elif [ $((onlinecheck)) != 0 ]; then
             echo "currently offline" >>$log 2>>$log
         else
-            curl -s -o /tmp/ER-wizard-0xFF-WSLE_latest.tar.gz --connect-timeout 2 --speed-time 2 https://codeload.github.com/$gitowner/$gitrepo/legacy.tar.gz/master >>$log 2>>$log
+            curl -s -o /tmp/ER-wizard-0xFF-WSLE_latest.tar.gz --connect-timeout 2 --speed-time 2 https://codeload.github.com/$gitowner/$gitrepo/legacy.tar.gz/$gitbranch >>$log 2>>$log
             tar   -xvzf /tmp/ER-wizard-0xFF-WSLE_latest.tar.gz -C /tmp >/tmp/result.txt 2>>$log
             rm -f       /tmp/ER-wizard-0xFF-WSLE_latest.tar.gz >>$log 2>>$log
             while read LINE; do
