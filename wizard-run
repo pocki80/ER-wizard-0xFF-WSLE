@@ -5068,6 +5068,10 @@ if [ -f /tmp/$filename ]; then
 fi
 rm -f /tmp/$filename >>$log
 
+#fix curl from http to https
+#can be removed upon update of .deb package containing already the corrected file
+sed -e 's/http:\/\/ff\.cybercomm\.at/https:\/\/ff\.cybercomm\.at/' /config/custom/loopairos.sh
+
 #remove old packages from previous wizard versions
 [ -f "/config/user-data/0xff-bmk-webstatus_4.1_mipsel.deb" ] && rm -f /config/user-data/0xff-bmk-webstatus_4.1_mipsel.deb
 [ -f "/config/user-data/0xff-bmk-webstatus_4.2_mipsel.deb" ] && rm -f /config/user-data/0xff-bmk-webstatus_4.2_mipsel.deb
