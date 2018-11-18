@@ -1,7 +1,7 @@
 # ER-wizard-0xFF-WSLE
 BMK-Webstatus-LetsEncrypt Wizard for Ubiquiti EdgeMAX Devices supporting Wizards 
 
-**IMPORTANT**: the status page uses PHP. Ubiquity removed PHP von EdgeOS v1.9.7alpha3! status.py now delivers basic ubnt-discover output when PHP is not available.
+**IMPORTANT**: the status page uses python for current EdgeOS versions, and PHP on EdgeOS v1.9.7alpha2 or older.
 
 Installs and manages the Web-Status-Packages with LetsEncrypt-Setup from this git:
 + https://github.com/dabeani/0xFF-BMK-webstatus
