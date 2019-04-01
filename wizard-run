@@ -1,7 +1,7 @@
 #!/bin/vbash
 #
 # EdgeMAX Wizard "0xFF-BMK-Webstatus-LetsEncrypt" created 02/2017 by CPO/BMK for FunkFeuer.at
-# Version 20190315/bmk4.8
+# Version 20190331/bmk4.8
 # ^-- previous line is used frombmk-webstatus-package as version identification, dont remove "Version "
 # Shortform: 0xffwsle 0xFF-WSLE
 #
@@ -5873,12 +5873,12 @@ esac
     #get current public FQDN
     LIST=""
     for i in $(ip -4 a | grep global | awk '{print $2}' | cut -d/ -f1 | grep -vE "10\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}|192\.168\.[0-9]{1,3}\.[0-9]{1,3}"); do
-        dn=$(/usr/bin/host $i | grep -v "not found" | awk '{gsub(".$","");print $5}' | awk '{print tolower($0)}')
+        dn=$(/usr/bin/host $i | grep -v "not found" | awk '{gsub(".$","");print $NF}' | awk '{print tolower($0)}')
         [ "$dn" ] && [ $(echo "$LIST" | wc -w) -eq 0 ] && LIST=$(echo $dn)
         [ "$dn" ] && [ $(echo "$LIST" | grep $dn -c) -eq 0 ] && LIST=$(echo -e "$LIST"'\n'$dn)
     done
     for i in $(ip -6 a | grep global | grep -vE "2a02:61:0:ee:1:|:51de:b00b" | awk '{print $2}' | cut -d/ -f1); do
-        dn=$(/usr/bin/host $i | grep -v "not found" | awk '{gsub(".$","");print $5}' | awk '{print tolower($0)}')
+        dn=$(/usr/bin/host $i | grep -v "not found" | awk '{gsub(".$","");print $NF}' | awk '{print tolower($0)}')
         [ "$dn" ] && [ $(echo "$LIST" | wc -w) -eq 0 ] && LIST=$(echo $dn)
         [ "$dn" ] && [ $(echo "$LIST" | grep $dn -c) -eq 0 ] && LIST=$(echo -e "$LIST"'\n'$dn)
     done
@@ -6364,12 +6364,12 @@ zfvr/rq//s3XH7wmIhIAcgAA
             # get all local FQDNs from global ip addresses
             LIST=""
             for i in $(ip -4 a | grep global | awk '{print $2}' | cut -d/ -f1 | grep -vE "10\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}|192\.168\.[0-9]{1,3}\.[0-9]{1,3}"); do
-                dn=$(/usr/bin/host $i | grep -v "not found" | awk '{gsub(".$","");print $5}' | awk '{print tolower($0)}')
+                dn=$(/usr/bin/host $i | grep -v "not found" | awk '{gsub(".$","");print $NF}' | awk '{print tolower($0)}')
                 [ "$dn" ] && [ $(echo "$LIST" | wc -w) -eq 0 ] && LIST=$(echo $dn)
                 [ "$dn" ] && [ $(echo "$LIST" | grep $dn -c) -eq 0 ] && LIST=$(echo -e "$LIST"'\n'$dn)
             done
             for i in $(ip -6 a | grep global | grep -vE "2a02:61:0:ee:1:|:51de:b00b" | awk '{print $2}' | cut -d/ -f1); do
-                dn=$(/usr/bin/host $i | grep -v "not found" | awk '{gsub(".$","");print $5}' )
+                dn=$(/usr/bin/host $i | grep -v "not found" | awk '{gsub(".$","");print $NF}' )
                 [ "$dn" ] && [ $(echo "$LIST" | wc -w) -eq 0 ] && LIST=$(echo $dn)
                 [ "$dn" ] && [ $(echo "$LIST" | grep $dn -c) -eq 0 ] && LIST=$(echo -e "$LIST"'\n'$dn)
             done
