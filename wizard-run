@@ -5801,8 +5801,6 @@ case $lestatus in
         lefiles=$lefiles',{"name":"[f] /config/letsencrypt/acme_tiny.py","status":"'$tmp'"}'
         [ -f "/config/letsencrypt/letsrenew.sh" ] && tmp="ok" || tmp="err"
         lefiles=$lefiles',{"name":"[f] /config/letsencrypt/letsrenew.sh","status":"'$tmp'"}'
-        [ -f "/config/custom/bin/ip2dns" ] && tmp="ok" || tmp="err"
-        lefiles=$lefiles',{"name":"[f] /config/custom/bin/ip2dns","status":"'$tmp'"}'
         [ -f "/config/letsencrypt/acme_tiny.py" ] && tmp="ok" || tmp="err"
         lefiles=$lefiles',{"name":"[f] /config/letsencrypt/acme_tiny.py","status":"'$tmp'"}'
         [ -f "/etc/cron.daily/letsrenew" ] && tmp="ok" || tmp="err"
