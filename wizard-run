@@ -5210,7 +5210,7 @@ rm -f /tmp/$filename >>$log
 
 #fix curl from http to https
 #can be removed upon update of .deb package containing already the corrected file
-sed -i 's/http:\/\/ff\.cybercomm\.at/https:\/\/ff\.cybercomm\.at/' /config/custom/loopairos.sh 2>>$LOG
+sed -i 's/http:\/\/ff\.cybercomm\.at/https:\/\/ff\.cybercomm\.at/' /config/custom/loopairos.sh 2>>$log
 
 #remove old packages from previous wizard versions
 [ -f "/config/user-data/0xff-bmk-webstatus_4.1_mipsel.deb" ] && rm -f /config/user-data/0xff-bmk-webstatus_4.1_mipsel.deb
@@ -5876,8 +5876,8 @@ esac
         dn=$(/usr/bin/host $i | grep -viE "not found|error|nxdomain" | awk '{gsub(".$","");print $NF}' | awk '{print tolower($0)}')
         [ "$dn" ] && [ $(echo "$LIST" | wc -w) -eq 0 ] && LIST=$(echo $dn)
         [ "$dn" ] && [ $(echo "$LIST" | grep $dn -c) -eq 0 ] && LIST=$(echo -e "$LIST"'\n'$dn)
-    doneip -6 a | grep global | grep -vE "2a02:61:0:ee:1:|:51de:b00b" | awk '{print $2}' | cut -d/ -f1
-    for i in $(); do
+    done
+    for i in $(ip -6 a | grep global | grep -vE "2a02:61:0:ee:1:|:51de:b00b" | awk '{print $2}' | cut -d/ -f1); do
         dn=$(/usr/bin/host $i | grep -viE "not found|error|nxdomain" | awk '{gsub(".$","");print $NF}' | awk '{print tolower($0)}')
         [ "$dn" ] && [ $(echo "$LIST" | wc -w) -eq 0 ] && LIST=$(echo $dn)
         [ "$dn" ] && [ $(echo "$LIST" | grep $dn -c) -eq 0 ] && LIST=$(echo -e "$LIST"'\n'$dn)
