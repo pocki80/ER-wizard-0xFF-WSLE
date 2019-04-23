@@ -1,7 +1,7 @@
 #!/bin/vbash
 #
 # EdgeMAX Wizard "0xFF-BMK-Webstatus-LetsEncrypt" created 02/2017 by CPO/BMK for FunkFeuer.at
-# Version 20190402/bmk4.8
+# Version 20190423/bmk4.8
 # ^-- previous line is used frombmk-webstatus-package as version identification, dont remove "Version "
 # Shortform: 0xffwsle 0xFF-WSLE
 #
@@ -6372,6 +6372,10 @@ zfvr/rq//s3XH7wmIhIAcgAA
                 [ "$dn" ] && [ $(echo "$LIST" | wc -w) -eq 0 ] && LIST=$(echo $dn)
                 [ "$dn" ] && [ $(echo "$LIST" | grep $dn -c) -eq 0 ] && LIST=$(echo -e "$LIST"'\n'$dn)
             done
+            #add custom FQDNs here
+            for i in $(cat /config/user-data/letsencrypt_fqdn.dat 2>/dev/null); do
+                [ "$dn" ] && [ $(echo "$LIST" | grep $dn -c) -eq 0 ] && LIST=$(echo -e "$LIST"'\n'$dn)
+            fi
             LISTCOUNT=$(echo "$LIST" | wc -l)
 
             CURRENT=$(openssl req -in /config/letsencrypt/domain.csr -noout -text | grep Subject | grep CN= | awk -F'=' {'print $2'} | awk '{print tolower($0)}')
