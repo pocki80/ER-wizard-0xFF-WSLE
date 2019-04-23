@@ -5881,6 +5881,10 @@ esac
         [ "$dn" ] && [ $(echo "$LIST" | wc -w) -eq 0 ] && LIST=$(echo $dn)
         [ "$dn" ] && [ $(echo "$LIST" | grep $dn -c) -eq 0 ] && LIST=$(echo -e "$LIST"'\n'$dn)
     done
+    #add custom FQDNs here
+    for dn in $(cat /config/user-data/letsencrypt_fqdn.dat 2>/dev/null); do
+        [ $(echo "$LIST" | grep $dn -c) -eq 0 ] && LIST=$(echo -e "$LIST"'\n'$dn)
+    done
     LISTCOUNT=$(echo "$LIST" | wc -l)
     if [ $LISTCOUNT -eq 0 ]; then
         echo "FQDN not known!" >> $log
@@ -6373,9 +6377,9 @@ zfvr/rq//s3XH7wmIhIAcgAA
                 [ "$dn" ] && [ $(echo "$LIST" | grep $dn -c) -eq 0 ] && LIST=$(echo -e "$LIST"'\n'$dn)
             done
             #add custom FQDNs here
-            for i in $(cat /config/user-data/letsencrypt_fqdn.dat 2>/dev/null); do
-                [ "$dn" ] && [ $(echo "$LIST" | grep $dn -c) -eq 0 ] && LIST=$(echo -e "$LIST"'\n'$dn)
-            fi
+            for dn in $(cat /config/user-data/letsencrypt_fqdn.dat 2>/dev/null); do
+                [ $(echo "$LIST" | grep $dn -c) -eq 0 ] && LIST=$(echo -e "$LIST"'\n'$dn)
+            done
             LISTCOUNT=$(echo "$LIST" | wc -l)
 
             CURRENT=$(openssl req -in /config/letsencrypt/domain.csr -noout -text | grep Subject | grep CN= | awk -F'=' {'print $2'} | awk '{print tolower($0)}')
