@@ -5883,7 +5883,7 @@ esac
     done
     #add custom FQDNs here
     for dn in $(cat /config/user-data/letsencrypt_fqdn.dat 2>/dev/null); do
-        [ $(echo "$LIST" | grep $dn -c) -eq 0 ] && LIST=$(echo -e "$LIST"'\n'$dn)
+        [ ${#dn} -ge 5 ] && [ $(echo "$LIST" | grep $dn -c) -eq 0 ] && LIST=$(echo -e "$LIST"'\n'$dn)
     done
     LISTCOUNT=$(echo "$LIST" | wc -l)
     if [ $LISTCOUNT -eq 0 ]; then
@@ -6378,7 +6378,7 @@ zfvr/rq//s3XH7wmIhIAcgAA
             done
             #add custom FQDNs here
             for dn in $(cat /config/user-data/letsencrypt_fqdn.dat 2>/dev/null); do
-                [ $(echo "$LIST" | grep $dn -c) -eq 0 ] && LIST=$(echo -e "$LIST"'\n'$dn)
+                [ ${#dn} -ge 5 ] && [ $(echo "$LIST" | grep $dn -c) -eq 0 ] && LIST=$(echo -e "$LIST"'\n'$dn)
             done
             LISTCOUNT=$(echo "$LIST" | wc -l)
 
