@@ -2,9 +2,9 @@
 
 EdgeMAX Wizard "0xFF-BMK-Webstatus-LetsEncrypt" created 02/2017 by CPO/BMK for FunkFeuer.at
 Works on EdgeRouter and EdgeRouter X / X-SFP (system version 1.9.0+)
-versioninfo=201904232
+versioninfo=201904233
 ^-- use version identifier as number: YYYYMMDDX whereas X can be intraday-version
-autoupdate=201904020
+autoupdate=201904233
 ^-- set autoupdate the same version identifier to allow autoupdates
 
 
@@ -34,6 +34,7 @@ autoupdate=201904020
     </td></tr>
     <tr><td style="vertical-align:middle" colspan=2>
        Several changes are applied with restarting the lighttpd. This will result in the error message "apply failed". <b>Reload the full WebUI after this!</b><br>
+       All locally assigned public IPs are resolved to FQDNs. If needed (i.e. for zone-external CNAMEs) you can add additional FQDNs to the file <em>/config/user-data/letsencrypt_fqdn.dat</em>.<br>
        &nbsp;<br>
     </td></tr>
     <tr><td style="vertical-align:middle">Current DNS</td><td><input style="right:10px" id="currentfqdn" name="currentfqdn" type="text" size="70" disabled /></td></tr>
