@@ -5960,7 +5960,7 @@ esac
 
     #get current register from domain.csr
     if [ -f /config/letsencrypt/domain.csr ]; then
-        CURRENT=$(openssl req -in /config/letsencrypt/domain.csr -noout -text | grep -E 'Subject: CN.?=' | awk -F'=' {'print $2'} | awk '{print tolower($0)} | tr -d " "')
+        CURRENT=$(openssl req -in /config/letsencrypt/domain.csr -noout -text | grep -E 'Subject: CN.?=' | awk -F'=' {'print $2'} | awk '{print tolower($0)}' | tr -d " ")
         if [ ! "$CURRENT" ]; then 
             CURRENT=$(openssl req -in /config/letsencrypt/domain.csr -noout -text | grep -A 1 "X509v3 Subject Alternative Name" | tail -n 1 | sed -e 's/ //g' | sed -e 's/DNS://g' )
             CURRENT=$(echo $CURRENT | tr , "\n" | sort | tr "\n" , | awk '{gsub(".$","");print $1}' | awk '{print tolower($0)}')
@@ -6451,7 +6451,7 @@ zfvr/rq//s3XH7wmIhIAcgAA
             done
             LISTCOUNT=$(echo "$LIST" | wc -l)
 
-            CURRENT=$(openssl req -in /config/letsencrypt/domain.csr -noout -text | grep -E 'Subject: CN.?=' | awk -F'=' {'print $2'} | awk '{print tolower($0)} | tr -d " "')
+            CURRENT=$(openssl req -in /config/letsencrypt/domain.csr -noout -text | grep -E 'Subject: CN.?=' | awk -F'=' {'print $2'} | awk '{print tolower($0)}' | tr -d " ")
             if [ ! "$CURRENT" ]; then 
                 CURRENT=$(openssl req -in /config/letsencrypt/domain.csr -noout -text | grep -A 1 "X509v3 Subject Alternative Name" | tail -n 1 | sed -e 's/ //g' )
                 CURRENT=$(echo $CURRENT | tr , "\n" | sort | tr "\n" , | awk '{gsub(".$","");print $1}' | awk '{print tolower($0)}')
