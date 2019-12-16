@@ -6418,7 +6418,7 @@ zfvr/rq//s3XH7wmIhIAcgAA
     if [[ "$destroykeys" == "on" ]]; then
         calcscript="/config/letsencrypt/calc.sh"
         # existing calc-script at this moment must be "active"
-        if [ ! $(ps aux | grep "$calcscript" | grep -vq "grep") ]; then
+        if ! (ps aux | grep "$calcscript" | grep -vq "grep"); then
             [ -f /config/letsencrypt/account.key ] && mv /config/letsencrypt/account.key /config/letsencrypt/account.old
             echo "#!/bin/sh" >$calcscript
             echo "openssl genrsa 4096 | tee /config/letsencrypt/account_tmp.key" >>$calcscript
