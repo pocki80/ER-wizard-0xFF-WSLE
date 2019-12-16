@@ -1,8 +1,8 @@
 #!/bin/vbash
 #
 # EdgeMAX Wizard "0xFF-BMK-Webstatus-LetsEncrypt" created 02/2017 by CPO/BMK for FunkFeuer.at
-# Version 20190923/bmk4.8
-# ^-- previous line is used frombmk-webstatus-package as version identification, dont remove "Version "
+# Version 20191216/bmk4.8
+# ^-- previous line is used from bmk-webstatus-package as version identification, dont remove "Version "
 # Shortform: 0xffwsle 0xFF-WSLE
 #
 # Github repository: https://github.com/pocki80/ER-wizard-0xFF-WSLE
@@ -5924,18 +5924,18 @@ esac
     #get current public FQDN
     LIST=""
     for i in $(ip -4 a | grep global | awk '{print $2}' | cut -d/ -f1 | grep -vE "10\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}|192\.168\.[0-9]{1,3}\.[0-9]{1,3}"); do
-        dn=$(/usr/bin/host $i | grep -viE "not found|error|nxdomain" | awk '{gsub(".$","");print $NF}' | awk '{print tolower($0)}')
+        dn=$(/usr/bin/host $i 2>/dev/null | grep -viE "not found|error|nxdomain" | awk '{gsub(".$","");print $NF}' | awk '{print tolower($0)}')
         [ "$dn" ] && [ $(echo "$LIST" | wc -w) -eq 0 ] && LIST=$(echo $dn)
         [ "$dn" ] && [ $(echo "$LIST" | grep -cE "^$dn$") -eq 0 ] && LIST=$(echo -e "$LIST"'\n'$dn)
     done
     for i in $(ip -6 a | grep global | grep -vE "2a02:61:0:ee:1:|:51de:b00b" | awk '{print $2}' | cut -d/ -f1); do
-        dn=$(/usr/bin/host $i | grep -viE "not found|error|nxdomain" | awk '{gsub(".$","");print $NF}' | awk '{print tolower($0)}')
+        dn=$(/usr/bin/host $i 2>/dev/null | grep -viE "not found|error|nxdomain" | awk '{gsub(".$","");print $NF}' | awk '{print tolower($0)}')
         [ "$dn" ] && [ $(echo "$LIST" | wc -w) -eq 0 ] && LIST=$(echo $dn)
         [ "$dn" ] && [ $(echo "$LIST" | grep -cE "^$dn$") -eq 0 ] && LIST=$(echo -e "$LIST"'\n'$dn)
     done
     #try to recognize nodemaster
     for dn in $(echo "$LIST" | sed -nr "s|([^.]*)\.([^.]*.\wien\.funkfeuer\.at)|\2|p" | awk '!x[$0]++'); do
-        dip=$(/usr/bin/host $dn | awk '$4 ~ "address" {print $5}')
+        dip=$(/usr/bin/host $dn 2>/dev/null | awk '$4 ~ "address" {print $5}')
         if [ "$dip" ] && (ip a | grep global | awk '{print $2}' | cut -d/ -f1 | grep -vE "10\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}|192\.168\.[0-9]{1,3}\.[0-9]{1,3}" | grep -qw "$dip"); then
             [ $(echo "$LIST" | wc -w) -eq 0 ] && LIST=$(echo $dn)
             [ $(echo "$LIST" | grep -cE "^$dn$") -eq 0 ] && LIST=$(echo -e "$LIST"'\n'$dn)
@@ -6410,6 +6410,83 @@ zfvr/rq//s3XH7wmIhIAcgAA
     registercert=$(jq -M -r '.registercert' $INPUT)
     installbmkpackage=$(jq -M -r '.installbmkpackage' $INPUT)
 
+    #######
+    ### recreate registration
+    ## calculate keys
+    if [[ "$destroykeys" == "on" ]]; then
+        calcscript="/config/letsencrypt/calc.sh"
+        # existing calc-script at this moment must be "active"
+        if [ ! $(pidof $calcscript) ]; then
+            if [ ! -f "/config/letsencrypt/account.key" ] || [ $(stat -c %s /config/letsencrypt/account.key) -eq 0 ]; then
+                [ -f /config/letsencrypt/account.key ] && mv /config/letsencrypt/account.key /config/letsencrypt/account.old
+                echo "#!/bin/sh" >$calcscript
+                echo "openssl genrsa 4096 | tee /config/letsencrypt/account_tmp.key" >>$calcscript
+                echo "cp    /config/letsencrypt/account_tmp.key /config/letsencrypt/account.key"  >>$calcscript
+                echo "rm -f /config/letsencrypt/account_tmp.key"  >>$calcscript
+            fi
+            if [ ! -f "/config/letsencrypt/domain.key" ] || [ $(stat -c %s /config/letsencrypt/domain.key) -eq 0 ]; then
+                [ -f /config/letsencrypt/domain.key ]  && mv /config/letsencrypt/domain.key  /config/letsencrypt/domain.old
+                if [ ! -f $calcscript ]; then
+                    echo "#!/bin/sh" >$calcscript
+                fi
+                echo "openssl genrsa 4096 | tee /config/letsencrypt/domain_tmp.key" >>$calcscript
+                echo "cp    /config/letsencrypt/domain_tmp.key /config/letsencrypt/domain.key"  >>$calcscript
+                echo "rm -f /config/letsencrypt/domain_tmp.key"  >>$calcscript
+            fi
+            if [ -f $calcscript ]; then
+                echo "rm -f "$(dirname $calcscript)"/nohup.out"  >>$calcscript
+                echo "rm -f "$(dirname $calcscript)"calc.sh"  >>$calcscript
+                chmod 755 $calcscript
+                nohup $calcscript &
+            fi
+        fi
+    fi
+    
+    #######
+    ### recreate registration
+    ## calculate ssh identity
+    # prepare ssh keys
+    if [[ "$destroyssh" == "on" ]]; then
+        [ -f /config/letsencrypt/id_rsa ] && mv /config/letsencrypt/id_rsa /config/letsencrypt/id_rsa.old
+        [ -f /config/letsencrypt/id_rsa.pub ] && mv /config/letsencrypt/id_rsa.pub /config/letsencrypt/id_rsa.pub.old
+        ssh-keygen -C "$(hostname)" -f /config/letsencrypt/id_rsa -N "" >/dev/null 2>&1
+        if   [ -d /home/ubnt ]; then user=ubnt
+        elif [ -d /home/funkfeuer ]; then user=funkfeuer
+        else user=$(ls -1 /home | head -n 1)
+        fi
+        chown $user:users /config/letsencrypt/id_rsa
+        chown $user:users /config/letsencrypt/id_rsa.pub
+
+        # after FW-update, ssh keys for root and for users are gone
+        # if exists, copy the keys back to users directories
+        # key to root user as well (needed for wizard)
+        if [ ! -d /root/.ssh ]; then
+          mkdir /root/.ssh
+        fi
+        if [ ! -f /root/.ssh/id_rsa ] && [ ! -f /root/.ssh/id_rsa.pub ]; then
+          cp /config/letsencrypt/id_rsa /root/.ssh/id_rsa
+          cp /config/letsencrypt/id_rsa.pub /root/.ssh/id_rsa.pub
+        fi
+        # fuer alle admin-user bereitstellen
+        userlist=$(grep -E "^        user |^            level " /config/config.boot | sed 'N;s/\n/ /' | grep "level admin" | awk {'print $2'})
+        #userlist="ubnt"
+        for user in $userlist; do
+          if [ -d /home/$user ] && [ ! -f /home/$user/.ssh/id_rsa ] && [ ! -f /home/$user/.ssh/id_rsa.pub ]; then
+            if [ ! -d /home/$user/.ssh ]; then
+              mkdir /home/$user/.ssh
+            fi
+            cp /config/letsencrypt/id_rsa /home/$user/.ssh/id_rsa
+            cp /config/letsencrypt/id_rsa.pub /home/$user/.ssh/id_rsa.pub
+            chown $user:users /home/$user/.ssh/id_rsa
+            chown $user:users /home/$user/.ssh/id_rsa.pub
+          fi
+          [ $(grep -c "alias ll=" /home/$user/.profile) -eq 0 ] && echo "alias ll=\"ls -al\"" >>/home/$user/.profile
+          [ $(grep -c PS1 /home/$user/.profile) -eq 0 ] && echo 'PS1="\[\e]0;${debian_chroot:+($debian_chroot)}\u@\h\a\]$PS1"' >>/home/$user/.profile
+        done
+        [ $(grep -c "alias ll=" /root/.profile) -eq 0 ] && echo 'echo "alias ll=\"ls -al\"" >>/root/.profile' | sudo at now
+    fi
+    
+    
     #######
     ### registration process
     if [[ "$registercert" == "on" ]]; then
