@@ -6418,7 +6418,7 @@ zfvr/rq//s3XH7wmIhIAcgAA
     if [[ "$destroykeys" == "on" ]]; then
         calcscript="/config/letsencrypt/calc.sh"
         # existing calc-script at this moment must be "active"
-        if [ ! $(pidof $calcscript) ]; then
+        if [ ! $(ps aux | grep "$calcscript" | grep -vq "grep") ]; then
             [ -f /config/letsencrypt/account.key ] && mv /config/letsencrypt/account.key /config/letsencrypt/account.old
             echo "#!/bin/sh" >$calcscript
             echo "openssl genrsa 4096 | tee /config/letsencrypt/account_tmp.key" >>$calcscript
@@ -6430,8 +6430,9 @@ zfvr/rq//s3XH7wmIhIAcgAA
             echo "rm -f /config/letsencrypt/domain_tmp.key"  >>$calcscript
             echo "rm -f "$(dirname $calcscript)"/nohup.out"  >>$calcscript
             echo "rm -f "$(dirname $calcscript)"calc.sh"  >>$calcscript
+            echo "exit 0"  >>$calcscript
             chmod 755 $calcscript
-            nohup $calcscript &
+            nohup $calcscript >/dev/null 2>/dev/null &
         fi
     fi
     
@@ -6456,15 +6457,13 @@ zfvr/rq//s3XH7wmIhIAcgAA
         if [ ! -d /root/.ssh ]; then
           mkdir /root/.ssh
         fi
-        if [ ! -f /root/.ssh/id_rsa ] && [ ! -f /root/.ssh/id_rsa.pub ]; then
-          cp /config/letsencrypt/id_rsa /root/.ssh/id_rsa
-          cp /config/letsencrypt/id_rsa.pub /root/.ssh/id_rsa.pub
-        fi
+        cp /config/letsencrypt/id_rsa /root/.ssh/id_rsa
+        cp /config/letsencrypt/id_rsa.pub /root/.ssh/id_rsa.pub
         # fuer alle admin-user bereitstellen
         userlist=$(grep -E "^        user |^            level " /config/config.boot | sed 'N;s/\n/ /' | grep "level admin" | awk {'print $2'})
         #userlist="ubnt"
         for user in $userlist; do
-          if [ -d /home/$user ] && [ ! -f /home/$user/.ssh/id_rsa ] && [ ! -f /home/$user/.ssh/id_rsa.pub ]; then
+          if [ -d /home/$user ]; then
             if [ ! -d /home/$user/.ssh ]; then
               mkdir /home/$user/.ssh
             fi
