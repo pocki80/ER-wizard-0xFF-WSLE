@@ -5335,8 +5335,8 @@ elif [ $(echo "$SEARCH" | grep -coE "10\..{3,7}\.[12]0[012345]/.{1,2}") \> 1 ]; 
   fi
 fi
 [ "$INTERFACES" ] &&
-  ANTENNEN=$(/usr/sbin/ubnt-discover -i "$INTERFACES" | awk '$4 ~ "[NL]B[25]|[PNB][25][BLN]|[PRNL][25]C|AG5|LM5"' | grep $LANSEGM) ||
-  ANTENNEN=$(/usr/sbin/ubnt-discover                  | awk '$4 ~ "[NL]B[25]|[PNB][25][BLN]|[PRNL][25]C|AG5|LM5"' | grep $LANSEGM)
+  ANTENNEN=$(/usr/sbin/ubnt-discover -i "$INTERFACES" | awk '$4 ~ "[NL]B[25]|[PNB][25][BLN]|[PRNL][25]C|AG5|LM5|TSW"' | grep $LANSEGM) ||
+  ANTENNEN=$(/usr/sbin/ubnt-discover                  | awk '$4 ~ "[NL]B[25]|[PNB][25][BLN]|[PRNL][25]C|AG5|LM5|TSW"' | grep $LANSEGM)
 echo "${ANTENNEN[@]}"
 
 #prepare deploy-sshkey script
@@ -5508,8 +5508,8 @@ elif [ $(echo "$SEARCH" | grep -coE "10\..{3,7}\.[12]0[012345]/.{1,2}") \> 1 ]; 
   fi
 fi
 [ "$INTERFACES" ] &&
-  ANTENNEN=$(/usr/sbin/ubnt-discover -i "$INTERFACES" | awk '$4 ~ "[NL]B[25]|[PNB][25][BLN]|[PRNL][25]C|AG5|LM5"' | grep $LANSEGM) ||
-  ANTENNEN=$(/usr/sbin/ubnt-discover                  | awk '$4 ~ "[NL]B[25]|[PNB][25][BLN]|[PRNL][25]C|AG5|LM5"' | grep $LANSEGM)
+  ANTENNEN=$(/usr/sbin/ubnt-discover -i "$INTERFACES" | awk '$4 ~ "[NL]B[25]|[PNB][25][BLN]|[PRNL][25]C|AG5|LM5|TSW"' | grep $LANSEGM) ||
+  ANTENNEN=$(/usr/sbin/ubnt-discover                  | awk '$4 ~ "[NL]B[25]|[PNB][25][BLN]|[PRNL][25]C|AG5|LM5|TSW"' | grep $LANSEGM)
 echo "${ANTENNEN[@]}"
 
 echo 'echo "'"$(cat /config/letsencrypt/domain.key)"'" >/tmp/domain.key'  >/tmp/sshcrtdeploy.sh
