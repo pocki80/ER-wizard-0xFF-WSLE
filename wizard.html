@@ -2,16 +2,16 @@
 
 EdgeMAX Wizard "0xFF-BMK-Webstatus-LetsEncrypt" created 02/2017 by CPO/BMK for FunkFeuer.at
 Works on EdgeRouter and EdgeRouter X / X-SFP (system version 1.9.0+)
-versioninfo=202001140
+versioninfo=202001150
 ^-- use version identifier as number: YYYYMMDDX whereas X can be intraday-version
-autoupdate=202001140
+autoupdate=202001150
 ^-- set autoupdate the same version identifier to allow autoupdates
 
 
 -->
 <legend style="position:absolute;right:0px;padding:5px;">
     <center>EdgeMAX Wizard "0xFF-BMK-Webstatus-LetsEncrypt"<br>created 02/2017 by CPO/BMK for FunkFeuer.at<br>
-    Version 20200114/bmk4.8</center>
+    Version 20200115/bmk4.8</center>
 </legend>
 <div class="instructions">
     <h3>0xFF-BMK-Webstatus with Let's Encrypt setup</h3>
@@ -138,7 +138,7 @@ autoupdate=202001140
     <tr><td><div><span><input id="updatefromgithub" name="updatefromgithub" type="checkbox" />&nbsp;</span></div><div><span class="text" data-infotip='Load and install newest version directly from Github'> Upgrade Wizard from GitHub (online only) on 'Apply'</span></div></td></tr>
     <tr><td><div><span><input id="autoupdatefromgithub" name="autoupdatefromgithub" type="checkbox" />&nbsp;</span></div><div><span class="text" data-infotip='Runs a daily job checking for updates - installs available auto-updates automatically'> Upgrade Wizard from GitHub <b>automatically</b></span></div></td></tr>
     <tr><td><div><span><input id="destroyssh"       name="destroyssh"       type="checkbox" />&nbsp;</span></div><div><span class="text" data-infotip='Run this job after cloning a router so the new router will use a unique identification.'> Re-create ssh key pair on 'Apply'</span></div></td></tr>
-    <tr><td><div><span><input id="destroykeys"      name="destroykeys"      type="checkbox" />&nbsp;</span></div><div><span class="text" data-infotip='Run this job after cloning a router so the new router will use a unique identification.'> Clean and re-create account.key/account.key on 'Apply' (needs approx. 2mins to complete in the background)</span></div></td></tr>
+    <tr><td><div><span><input id="destroykeys"      name="destroykeys"      type="checkbox" />&nbsp;</span></div><div><span class="text" data-infotip='Run this job after cloning a router so the new router will use a unique identification.'> Clean and re-create account.key/domain.key/domain.csr on 'Apply' (needs approx. 2mins to complete in the background)</span></div></td></tr>
     <tr><td><div><span><input id="registercert"     name="registercert"     type="checkbox" />&nbsp;</span></div><div><span class="text" data-infotip='Run this job to initially register this domain, or to renew the certificate.'> Register FQDN and renew/install Certificate on 'Apply'</span></div></td></tr>
     <tr><td><div><span><input id="deployactive"     name="deployactive"     type="checkbox" />&nbsp;</span></div><div><span class="text" data-infotip='Router needs Management-IP 10.x.x.100/24 on the same subnet like AirOS-Antennas! All discovered AirOS-devices will be connected through ssh to get their lighttpd SSL certificate updated. SSH connection will only work, if the routers public key was deployed to AirOS in advance! To do so, run the deploy script or download and deploy the key using WebGUI.'> Try to establish server.pem on local antennas after renewal</span></div></td></tr>
     <tr><td><div><span class="text"> 
