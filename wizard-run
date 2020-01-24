@@ -1,7 +1,7 @@
 #!/bin/vbash
 #
 # EdgeMAX Wizard "0xFF-BMK-Webstatus-LetsEncrypt" created 02/2017 by CPO/BMK for FunkFeuer.at
-# Version 20200115/bmk4.8
+# Version 20200124/bmk4.8
 # ^-- previous line is used from bmk-webstatus-package as version identification, dont remove "Version "
 # Shortform: 0xffwsle 0xFF-WSLE
 #
@@ -5955,7 +5955,7 @@ esac
         PUBLICIP=$(echo $LIST)
     else
         # multiple FQDNs
-        PUBLICIP=$(echo "$LIST" | sed -e :a -e '$!N; s/\n/,/; ta')
+        PUBLICIP=$(echo "$LIST" | sed -e '/^$/d' -e :a -e '$!N; s/\n/,/; ta')
         PUBLICIP=$(echo $PUBLICIP | tr , "\n" | sort | tr "\n" , | awk '{gsub(".$","");print $1}')
     fi
     [ "$PUBLICIP" ] && ledetails=',"currentfqdn":"'$PUBLICIP'"' || ledetails=',"currentfqdn":"not available"'
@@ -6536,7 +6536,7 @@ zfvr/rq//s3XH7wmIhIAcgAA
                 PUBLICIP=$(echo $LIST)
             else
                 # multiple FQDNs
-                PUBLICIP=$(echo "DNS:"$(echo "$LIST" | sed -e :a -e '$!N; s/\n/,DNS\:/; ta'))
+                PUBLICIP=$(echo "DNS:"$(echo "$LIST" | sed -e '/^$/d' -e :a -e '$!N; s/\n/,DNS\:/; ta'))
                 PUBLICIP=$(echo $PUBLICIP | tr , "\n" | sort | tr "\n" , | awk '{gsub(".$","");print $1}')
             fi
             echo "...lookup result ($LISTCOUNT):" >>$log
