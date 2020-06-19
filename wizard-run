@@ -5342,8 +5342,8 @@ elif [ $(echo "$SEARCH" | grep -coE "10\..{3,7}\.[12]0[012345]/.{1,2}") \> 1 ]; 
   fi
 fi
 [ "$INTERFACES" ] &&
-  ANTENNEN=$(/usr/sbin/ubnt-discover -i "$INTERFACES" | awk '$4 ~ "[NL]B[25]|[PNB][B25][BLNE]|[PRNL][25]C|AG5|LM5|LAP|TSW"' | grep $LANSEGM) ||
-  ANTENNEN=$(/usr/sbin/ubnt-discover                  | awk '$4 ~ "[NL]B[25]|[PNB][B25][BLNE]|[PRNL][25]C|AG5|LM5|LAP|TSW"' | grep $LANSEGM)
+  ANTENNEN=$(/usr/sbin/ubnt-discover -i "$INTERFACES" | awk '$4 ~ "[NL]B[25]|[PNB][B25][BLNE]|[PRNL][25]C|AG5|LM5|LAP|Loco5AC|TSW"' | grep $LANSEGM) ||
+  ANTENNEN=$(/usr/sbin/ubnt-discover                  | awk '$4 ~ "[NL]B[25]|[PNB][B25][BLNE]|[PRNL][25]C|AG5|LM5|LAP|Loco5AC|TSW"' | grep $LANSEGM)
 echo "${ANTENNEN[@]}"
 
 #prepare deploy-sshkey script
@@ -5515,8 +5515,8 @@ elif [ $(echo "$SEARCH" | grep -coE "10\..{3,7}\.[12]0[012345]/.{1,2}") \> 1 ]; 
   fi
 fi
 [ "$INTERFACES" ] &&
-  ANTENNEN=$(/usr/sbin/ubnt-discover -i "$INTERFACES" | awk '$4 ~ "[NL]B[25]|[PNB][B25][BLNE]|[PRNL][25]C|AG5|LM5|LAP|TSW"' | grep $LANSEGM) ||
-  ANTENNEN=$(/usr/sbin/ubnt-discover                  | awk '$4 ~ "[NL]B[25]|[PNB][B25][BLNE]|[PRNL][25]C|AG5|LM5|LAP|TSW"' | grep $LANSEGM)
+  ANTENNEN=$(/usr/sbin/ubnt-discover -i "$INTERFACES" | awk '$4 ~ "[NL]B[25]|[PNB][B25][BLNE]|[PRNL][25]C|AG5|LM5|LAP|Loco5AC|TSW"' | grep $LANSEGM) ||
+  ANTENNEN=$(/usr/sbin/ubnt-discover                  | awk '$4 ~ "[NL]B[25]|[PNB][B25][BLNE]|[PRNL][25]C|AG5|LM5|LAP|Loco5AC|TSW"' | grep $LANSEGM)
 echo "${ANTENNEN[@]}"
 
 echo 'echo "'"$(cat /config/letsencrypt/domain.key)"'" >/tmp/domain.key'  >/tmp/sshcrtdeploy.sh
@@ -5948,6 +5948,9 @@ esac
             [ $(echo "$LIST" | grep -cE "^$dn$") -eq 0 ] && LIST=$(echo -e "$LIST"'\n'$dn)
         fi
     done
+
+    #python -c 'import sys;print sys.argv[1].decode("idna").encode("utf-8")' "xn--bcher-kva.wehr24test.wien.funkfeuer.at"
+
     #add custom FQDNs here
     for dn in $(cat /config/user-data/letsencrypt_fqdn.dat 2>/dev/null); do
         [ ${#dn} -ge 5 ] && [ $(echo "$LIST" | grep -cE "^$dn$") -eq 0 ] && LIST=$(echo -e "$LIST"'\n'$dn)
