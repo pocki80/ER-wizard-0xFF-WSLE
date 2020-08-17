@@ -5589,6 +5589,8 @@ if [ $(ip -4 a | grep global | awk '{print $2}' | cut -d/ -f1 | grep -vEc "10\.[
   echo "replacing server.pem..."
   sudo /sbin/start-stop-daemon --stop --pidfile /var/run/lighttpd_custom.pid
   sudo /sbin/start-stop-daemon --stop --pidfile /var/run/lighttpd.pid
+  running=$(ps aux | grep /etc/lighttpd/lighttpd.conf | grep www-data | awk '{print $2}')
+  [ "$running" ] && sudo kill $running
   sudo cp /tmp/server.pem /etc/lighttpd/server.pem
   sudo chmod 600 /etc/lighttpd/server.pem
   sudo /sbin/start-stop-daemon --start --quiet --pidfile /var/run/lighttpd.pid        --exec /usr/sbin/lighttpd -- -f /etc/lighttpd/lighttpd.conf
@@ -6851,6 +6853,8 @@ echo $output >> $log
         if [ -f "/var/run/lighttpd.pid" ]; then
           rm /var/run/lighttpd.pid
         fi
+        running=$(ps aux | grep /etc/lighttpd/lighttpd.conf | grep www-data | awk '{print $2}')
+        [ "$running" ] && sudo kill $running
         sudo /sbin/start-stop-daemon --start --quiet \
               --pidfile /var/run/lighttpd.pid \
               --exec /usr/sbin/lighttpd -- -f /etc/lighttpd/lighttpd.conf >>$log 2>>$log
